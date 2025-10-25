@@ -1,0 +1,11 @@
+{
+  "$type": "SadConsole.SadFont, SadConsole",
+  "Name": "kenney_1-bit",
+  "FilePath": "kenney_1-bit.png",
+  "GlyphHeight": 16,
+  "GlyphPadding": 0,
+  "GlyphWidth": 16,
+  "SolidGlyphIndex": 253,
+  "Columns": 49,
+  "IsSadExtended": false
+}
