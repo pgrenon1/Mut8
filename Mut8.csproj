@@ -10,6 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="source\**" />
+    <EmbeddedResource Remove="source\**" />
+    <None Remove="source\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="SadConsole" />
     <Using Include="SadRogue.Primitives" />
     <Using Include="SadConsole.Console" Alias="Console" />

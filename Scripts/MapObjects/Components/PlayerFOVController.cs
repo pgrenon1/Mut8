@@ -2,7 +2,7 @@
 using SadRogue.Integration;
 using SadRogue.Integration.Components;
 
-namespace Mut8
+namespace Mut8.Scripts.MapObjects.Components
 {
     /// <summary>
     /// Component that you can attach to your player object to ensure that it re-calculates the map's FOV whenever the

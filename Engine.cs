@@ -1,4 +1,5 @@
-﻿using SadConsole.Configuration;
+﻿using Mut8.Scripts.Screens;
+using SadConsole.Configuration;
 using SadConsole.Input;
 
 namespace Mut8
@@ -14,25 +15,21 @@ namespace Mut8
     /// might want to modify; they're simply designed to provide a "quick-start" guide that can help you accomplish some
     /// common tasks.
     /// </summary>
-    internal static class Program
+    internal static class Engine
     {
-        // Window width/height in cell units
-        public const int Width = 80;
-        public const int Height = 25;
-
-        // Map width/height
-        private const int MapWidth = 100;
-        private const int MapHeight = 60;
-
-        public static MapScreen? GameScreen;
+        public const int WINDOW_WIDTH = 80*2;
+        public const int WINDOW_HEIGHT = 25*2;
+        private const string MAP_FONT_PATH = "../../../../Assets/Fonts/kenney_combined.font";
+        
+        public static MainGame? MainGame;
 
         private static void Main()
         {
-            Settings.WindowTitle = "My SadConsole Game";
+            Settings.WindowTitle = "Mut8";
 
             // Configure how SadConsole starts up
             Builder startup = new Builder()
-                    .SetWindowSizeInCells(Width, Height)
+                    .SetWindowSizeInCells(WINDOW_WIDTH, WINDOW_HEIGHT)
                     .OnStart(Init)
                     .ConfigureFonts(SetupFonts)
                     .EnableImGuiDebugger(Keys.F2)
@@ -44,22 +41,27 @@ namespace Mut8
             Game.Instance.Dispose();
         }
 
+        private static void Init(object? s, GameHost host)
+        {
+            MainGame = new MainGame();
+            host.Screen = MainGame;
+
+            // Create a MapScreen and set it as the active screen so that it processes input and renders itself.
+            //GameScreen = new MapScreen(map);
+            //host.Screen = GameScreen;
+
+            SetupWindowResizeHandler();
+        }
+
         private static void SetupFonts(FontConfig config, GameHost host)
         {
             config.UseBuiltinFontExtended();
-            config.AddExtraFonts("../../../../assets/fonts/kenney_1-bit.font");
+            config.AddExtraFonts(MAP_FONT_PATH);
         }
 
-        private static void Init(object? s, GameHost host)
+        private static void SetupWindowResizeHandler()
         {
-            // Generate a dungeon map
-            var map = MapFactory.GenerateDungeonMap(MapWidth, MapHeight);
-
-            // Create a MapScreen and set it as the active screen so that it processes input and renders itself.
-            GameScreen = new MapScreen(map);
-            host.Screen = GameScreen;
-
-            Settings.ResizeMode = Settings.WindowResizeOptions.Scale;
+            Settings.ResizeMode = Settings.WindowResizeOptions.Fit;
 
             SadConsole.Host.Game monoGameInstance = (SadConsole.Host.Game)SadConsole.Game.Instance.MonoGameInstance;
             monoGameInstance.WindowResized += MonoGameInstance_WindowResized;

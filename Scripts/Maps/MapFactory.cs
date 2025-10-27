@@ -1,15 +1,13 @@
 ﻿using GoRogue.MapGeneration;
 using GoRogue.Random;
+using Mut8.Scripts.MapObjects;
 using SadRogue.Integration.FieldOfView.Memory;
 using SadRogue.Primitives.GridViews;
 using ShaiRandom.Generators;
+using SadRogue.Integration;
 
-namespace Mut8
+namespace Mut8.Scripts.Maps
 {
-    /// <summary>
-    /// Similar to <see cref="MapObjectFactory"/>, but for producing various types of maps.  The functions here
-    /// use GoRogue map generation and then translate the results to integration library structures.
-    /// </summary>
     /// <remarks>
     /// CUSTOMIZATION: Modify the functions as applicable to generate appropriate maps; both the map data generation
     /// (using GoRogue) and the translation to integration library structure occurs here.
@@ -24,7 +22,7 @@ namespace Mut8
     /// </remarks>
     internal static class MapFactory
     {
-        public static MyGameMap GenerateDungeonMap(int width, int height)
+        public static GameMap GenerateDungeonMap(int width, int height)
         {
             // Generate a rectangular map for the sake of testing with GoRogue's map generation system.
             //
@@ -32,13 +30,16 @@ namespace Mut8
             var generator = new Generator(width, height)
                 .ConfigAndGenerateSafe(gen =>
                 {
-                    gen.AddSteps(DefaultAlgorithms.RectangleMapSteps());
+                    gen.AddSteps(DefaultAlgorithms.CellularAutomataGenerationSteps());
                 });
 
             var generatedMap = generator.Context.GetFirst<ISettableGridView<bool>>("WallFloor");
 
+            // Set the generated map in MapObjectFactory for bitmask calculations
+            MapObjectFactory.SetGeneratedMap(generatedMap);
+
             // Create actual integration library map.
-            var map = new MyGameMap(generator.Context.Width, generator.Context.Height, null);
+            var map = new GameMap(generator.Context.Width, generator.Context.Height, null);
 
             // Add a component that will implement a character "memory" system, where tiles will be dimmed when they aren't seen by the player,
             // and remain visible exactly as they were when the player last saw them regardless of changes to their actual appearance,
@@ -53,15 +54,16 @@ namespace Mut8
             // system.
             map.ApplyTerrainOverlay(generatedMap, (pos, val) => val ? MapObjectFactory.Floor(pos) : MapObjectFactory.Wall(pos));
 
-            // Generate 10 enemies, placing them in random walkable locations for demo purposes.
-            for (int i = 0; i < 10; i++)
+            // Generate 5 enemies, placing them in random walkable locations for demo purposes.
+            for (int i = 0; i < 5; i++)
             {
-                var enemy = MapObjectFactory.Enemy();
-                enemy.Position = GlobalRandom.DefaultRNG.RandomPosition(map.WalkabilityView, true);
+                Point position = GlobalRandom.DefaultRNG.RandomPosition(map.WalkabilityView, true);
+                var enemy = MapObjectFactory.EntityFactory!.Create("Enemy", position);
                 map.AddEntity(enemy);
             }
 
             return map;
         }
+
     }
 }

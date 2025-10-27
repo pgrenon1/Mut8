@@ -1,8 +1,9 @@
 ﻿using GoRogue.GameFramework;
+using Mut8.Scripts.MapObjects;
 using SadRogue.Integration;
 using SadRogue.Integration.Components;
 
-namespace Mut8
+namespace Mut8.Scripts.MapObjects.Components
 {
     /// <summary>
     /// Simple component that moves its parent toward the player if the player is visible. It demonstrates the basic
@@ -19,12 +20,16 @@ namespace Mut8
             if (Parent?.CurrentMap == null) return;
             if (!Parent.CurrentMap.PlayerFOV.CurrentFOV.Contains(Parent.Position)) return;
 
-            var path = Parent.CurrentMap.AStar.ShortestPath(Parent.Position, Program.GameScreen!.Player.Position);
+            Player? player = Engine.MainGame!.Player;
+            if (player == null) return;
+
+            var path = Parent.CurrentMap.AStar.ShortestPath(Parent.Position, player.Position);
             if (path == null) return;
+
             var firstPoint = path.GetStep(0);
             if (Parent.CanMove(firstPoint))
             {
-                Program.GameScreen.MessageLog.AddMessage($"An enemy moves {Direction.GetDirection(Parent.Position, firstPoint)}!");
+                Engine.MainGame.MessagePanel.AddMessage($"An enemy moves {Direction.GetDirection(Parent.Position, firstPoint)}!");
                 Parent.Position = firstPoint;
             }
 

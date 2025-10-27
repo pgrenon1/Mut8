@@ -1,8 +1,9 @@
 ﻿using GoRogue.GameFramework;
+using SadConsole.Input;
 using SadRogue.Integration;
 using SadRogue.Integration.Keybindings;
 
-namespace Mut8
+namespace Mut8.Scripts.MapObjects.Components
 {
     /// <summary>
     /// Subclass of the integration library's keybindings component that handles player movement and moves enemies as appropriate when the player
@@ -18,13 +19,23 @@ namespace Mut8
     /// </remarks>
     internal class CustomKeybindingsComponent : KeybindingsComponent<RogueLikeEntity>
     {
+        public CustomKeybindingsComponent(uint sortOrder = 5) : base(sortOrder)
+        {
+            // Bind F3 key to reveal all tiles action
+            SetAction(Keys.F3, () =>
+            {
+                var revealComponent = Parent!.AllComponents.GetFirstOrDefault<RevealAllTilesComponent>();
+                revealComponent?.RevealAllTiles();
+            });
+        }
+
         protected override void MotionHandler(Direction direction)
         {
             if (!Parent!.CanMoveIn(direction)) return;
 
             Parent!.Position += direction;
 
-            Program.GameScreen!.MessageLog.AddMessage("You move " + direction + "!");
+            Engine.MainGame!.MessagePanel.AddMessage("You move " + direction + "!");
 
             foreach (var entity in Parent.CurrentMap!.Entities.Items)
             {

@@ -1,28 +1,28 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace Mut8
+namespace Mut8.Scripts.Screens.Surfaces
 {
     /// <summary>
     /// A very basic SadConsole Console subclass that acts as a game message log.
     /// </summary>
-    public class MessageLogConsole : Console
+    public class MessageLogPanel : Console
     {
         private string _lastMessage;
         private int _lastMessageCount;
 
-        public MessageLogConsole(int width, int height)
+        public MessageLogPanel(int width, int height)
             : base(width, height)
         {
             Initialize();
         }
 
-        public MessageLogConsole(int width, int height, int bufferWidth, int bufferHeight)
+        public MessageLogPanel(int width, int height, int bufferWidth, int bufferHeight)
             : base(width, height, bufferWidth, bufferHeight)
         {
             Initialize();
         }
 
-        public MessageLogConsole(ICellSurface surface, IFont? font = null, Point? fontSize = null)
+        public MessageLogPanel(ICellSurface surface, IFont? font = null, Point? fontSize = null)
             : base(surface, font, fontSize)
         {
             Initialize();
