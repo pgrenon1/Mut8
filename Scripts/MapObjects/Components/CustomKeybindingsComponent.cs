@@ -1,4 +1,5 @@
 ﻿using GoRogue.GameFramework;
+using Mut8.Scripts.Actions;
 using SadConsole.Input;
 using SadRogue.Integration;
 using SadRogue.Integration.Keybindings;
@@ -31,17 +32,29 @@ namespace Mut8.Scripts.MapObjects.Components
 
         protected override void MotionHandler(Direction direction)
         {
-            if (!Parent!.CanMoveIn(direction)) return;
+            base.MotionHandler(direction);
 
-            Parent!.Position += direction;
+            // Create a walk action
+            var walkAction = new MoveAction(Parent!, direction);
 
-            Engine.MainGame!.MessagePanel.AddMessage("You move " + direction + "!");
-
-            foreach (var entity in Parent.CurrentMap!.Entities.Items)
+            // Get the Actor component from the parent entity and queue the action
+            var actor = Parent!.AllComponents.GetFirstOrDefault<Actor>();
+            if (actor != null)
             {
-                var ai = entity.GoRogueComponents.GetFirstOrDefault<DemoEnemyAI>();
-                ai?.TakeTurn();
+                actor.SetNextAction(walkAction);
             }
+
+            //if (!Parent!.CanMoveIn(direction)) return;
+
+                //Parent!.Position += direction;
+
+                //Engine.MainGame!.MessagePanel.AddMessage("You move " + direction + "!");
+
+                //foreach (var entity in Parent.CurrentMap!.Entities.Items)
+                //{
+                //    var ai = entity.GoRogueComponents.GetFirstOrDefault<DemoEnemyAI>();
+                //    ai?.TakeTurn();
+                //}
         }
     }
 }

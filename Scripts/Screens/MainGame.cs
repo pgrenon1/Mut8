@@ -1,4 +1,5 @@
 ﻿using GoRogue.Random;
+using Mut8.Scripts;
 using Mut8.Scripts.MapObjects;
 using Mut8.Scripts.MapObjects.Components;
 using Mut8.Scripts.Maps;
@@ -13,6 +14,7 @@ namespace Mut8.Scripts.Screens
         public MessageLogPanel MessagePanel;
         public Player Player;
         public StatusPanel? StatusPanel;
+        public GameLoop GameLoop;
 
         private const int MAP_WIDTH = 100;
         private const int MAP_HEIGHT = 60;
@@ -26,17 +28,30 @@ namespace Mut8.Scripts.Screens
         {
             CreateMap();
 
+            GameLoop = new GameLoop(Map!);
+
             CreatePlayer();
 
             // Center view on player as they move
             SadConsole.Components.SurfaceComponentFollowTarget viewLock = new() { Target = Player };
-            Map.DefaultRenderer?.SadComponents.Add(viewLock);
+            Map!.DefaultRenderer?.SadComponents.Add(viewLock);
 
             CreateMessagePanel();
 
             CreateStatusPanel();
 
             // Add Player death handler?
+        }
+
+        public override void Update(TimeSpan delta)
+        {
+            base.Update(delta);
+
+            // Process the game loop continuously until we need player input
+            while (GameLoop.Process())
+            {
+                // Keep processing until a turn is blocked (waiting for player input)
+            }
         }
 
         private void CreateStatusPanel()

@@ -10,6 +10,11 @@ namespace Mut8.Scripts.MapObjects
         public Player()
             : base(Color.White, Color.Black, 1792, false, layer: (int)GameMap.Layer.Monsters)
         {
+            Name = "Player";
+
+            // Actor component (enables turn-based actions)
+            AllComponents.Add(new Actor(speed: 100));
+
             // Motion control
             var motionControl = new CustomKeybindingsComponent();
             motionControl.SetMotions(KeybindingsComponent.ArrowMotions);
@@ -22,6 +27,7 @@ namespace Mut8.Scripts.MapObjects
             // Reveal all tiles component (F3 key)
             AllComponents.Add(new RevealAllTilesComponent());
 
+            // Health
             AllComponents.Add(new Health(100));
         }
     }
