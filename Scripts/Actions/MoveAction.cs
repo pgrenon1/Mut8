@@ -52,7 +52,7 @@ namespace Mut8.Scripts.Actions
                     }
                 }
 
-                Engine.MainGame?.MessagePanel.AddMessage($"[{Engine.MainGame.GameLoop.TurnNumber} - {DateTime.Now.ToString("HH:mm:ss:ffff")}] {Entity.Name} moves {_direction.ToString().ToLower()}.");
+                Engine.MainGame?.MessagePanel?.AddMessage($"[{Engine.MainGame.GameLoop.TurnNumber} - {DateTime.Now.ToString("HH:mm:ss:ffff")}] {Entity.Name} moves {_direction.ToString().ToLower()}.");
 
                 return ActionResult.SuccessWithTime(BaseMoveCost);
             }

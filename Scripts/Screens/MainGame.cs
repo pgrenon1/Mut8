@@ -1,4 +1,5 @@
 ﻿using GoRogue.Random;
+using Mut8.Scripts.Core;
 using Mut8.Scripts.MapObjects;
 using Mut8.Scripts.MapObjects.Components;
 using Mut8.Scripts.Maps;
@@ -78,7 +79,7 @@ namespace Mut8.Scripts.Screens
         {
             // Generate player, add to map at a random walkable position, and calculate initial FOV
             Player = new Player();
-            Player.Position = GlobalRandom.DefaultRNG.RandomPosition(Map.WalkabilityView, true);
+            Player.Position = GlobalRandom.DefaultRNG.RandomPosition(Map!.WalkabilityView, true);
             Map.AddEntity(Player);
             Player.AllComponents.GetFirst<PlayerFOVController>().CalculateFOV();
             PlayerCreated?.Invoke(this, EventArgs.Empty);
