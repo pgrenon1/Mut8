@@ -19,7 +19,7 @@ namespace Mut8
     {
         public const int WINDOW_WIDTH = 80*2;
         public const int WINDOW_HEIGHT = 25*2;
-        private const string MAP_FONT_PATH = "./Assets/Fonts/kenney_combined.font";
+        private const string MAP_FONT_PATH = "Assets/Fonts/kenney_combined.font";
         
         public static MainGame? MainGame;
 

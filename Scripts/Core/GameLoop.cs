@@ -1,6 +1,5 @@
 ﻿using Mut8.Scripts.MapObjects;
 using Mut8.Scripts.MapObjects.Components;
-using System.Diagnostics;
 
 namespace Mut8.Scripts.Core
 {
@@ -30,12 +29,11 @@ namespace Mut8.Scripts.Core
     /// </summary>
     internal class GameLoop
     {
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private readonly PriorityQueue<Actor, int> _actorQueue = new();
         private int _turnNumber;
 
         public int TurnNumber => _turnNumber;
-        
+
         public GameLoop()
         {
             AddActor(new TurnEventActor(100));

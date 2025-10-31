@@ -10,12 +10,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="source\**" />
-    <EmbeddedResource Remove="source\**" />
-    <None Remove="source\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Using Include="SadConsole" />
     <Using Include="SadRogue.Primitives" />
     <Using Include="SadConsole.Console" Alias="Console" />
@@ -26,6 +20,12 @@
     <PackageReference Include="SadConsole.Debug.MonoGame" Version="10.6.0" />
     <PackageReference Include="SadConsole.Host.MonoGame" Version="10.6.0" />
     <PackageReference Include="TheSadRogue.Integration" Version="1.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Assets\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
