@@ -43,8 +43,12 @@ namespace Mut8.Scripts.Actions
                 Entity.Position = newPosition;
 
                 // If this is the player, immediately center the camera on them
-                if (Entity is Player && Entity.CurrentMap is GameMap gameMap)
+                if (Entity is Player)
                 {
+                    var gameMap = Entity.CurrentMap as GameMap;
+                    if (gameMap == null)
+                        return ActionResult.Failure;
+                    
                     var renderer = gameMap.DefaultRenderer;
                     if (renderer != null)
                     {

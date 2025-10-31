@@ -57,7 +57,7 @@ namespace Mut8.Scripts.MapObjects
                             Position = pos
                         };
                         enemy.AllComponents.Add(new DemoEnemyAI());
-                        enemy.AllComponents.Add(new Actor(50));
+                        enemy.AllComponents.Add(new Actor(0));
                         enemy.Name = "Gnome";
                         return enemy;
                     }

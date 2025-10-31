@@ -29,8 +29,9 @@ namespace Mut8.Scripts.Core
     /// </summary>
     internal class GameLoop
     {
-        private readonly PriorityQueue<Actor, int> _actorQueue = new();
+        private PriorityQueue<Actor, (int time, long insertionOrder)> _actorQueue = new();
         private int _turnNumber;
+        private long _insertionCounter = 0;
 
         public int TurnNumber => _turnNumber;
 
@@ -45,7 +46,7 @@ namespace Mut8.Scripts.Core
         /// </summary>
         public void AddActor(Actor actor)
         {
-            _actorQueue.Enqueue(actor, actor.Time);
+            _actorQueue.Enqueue(actor, (actor.Time, _insertionCounter++));
         }
 
         /// <summary>
@@ -68,7 +69,7 @@ namespace Mut8.Scripts.Core
 
             foreach (var (a, time) in tempList)
             {
-                _actorQueue.Enqueue(a, time);
+                _actorQueue.Enqueue(a, (time, _insertionCounter));
             }
         }
 
@@ -89,23 +90,31 @@ namespace Mut8.Scripts.Core
             while (iterations < maxIterations && _actorQueue.Count > 0)
             {
                 iterations++;
-
-                // Get the next actor (the one with the lowest time value)
-                var currentActor = _actorQueue.Dequeue();
+                
+                // Peek at the next actor without removing them
+                _actorQueue.TryPeek(out Actor currentActor, out _);
+                
+                // Check if this is a player waiting for input
+                var isPlayer = currentActor.Parent is Player;
+                
+                if (isPlayer)
+                {
+                    var action = currentActor.GetAction();
+                    if (action == null)
+                    {
+                        // Player has no action ready, stop processing without dequeuing
+                        break;
+                    }
+                }
+                
+                // Now actually dequeue since we know we can process this actor
+                currentActor = _actorQueue.Dequeue();
 
                 // Try to process the current actor's turn
-                bool turnProcessed = ProcessActorTurn(currentActor);
-
-                // If turn wasn't processed (waiting for player input), 
-                // put the actor back in the queue and break
-                if (!turnProcessed)
-                {
-                    _actorQueue.Enqueue(currentActor, currentActor.Time);
-                    break;
-                }
+                ProcessActorTurn(currentActor);
 
                 // Actor has taken their action, put them back in the queue with updated time
-                _actorQueue.Enqueue(currentActor, currentActor.Time);
+                _actorQueue.Enqueue(currentActor, (currentActor.Time, _insertionCounter++));
             }
         }
 
@@ -113,60 +122,42 @@ namespace Mut8.Scripts.Core
         /// Processes a single actor's turn.
         /// Returns true if an action was processed, false if waiting for player input.
         /// </summary>
-        private bool ProcessActorTurn(Actor actor)
+        private void ProcessActorTurn(Actor actor)
         {
-            // Get the action the actor wants to perform
             var action = actor.GetAction();
 
-            // If no action available
             if (action == null)
             {
-                // Check if this is the player - if so, wait for input
-                var isPlayer = actor.Parent?.AllComponents.GetFirstOrDefault<CustomKeybindingsComponent>() != null;
-
-                if (isPlayer)
-                {
-                    // Player is waiting for input, return false to stop processing
-                    return false;
-                }
-                else
-                {
-                    // AI has no action, skip by adding minimal time
-                    actor.Time += 100; // Default action cost
-                }
+                // AI has no action, skip by adding minimal time
+                actor.Time += 100;
+                return;
             }
-            else
+            
+            actor.ClearNextAction();
+
+            if (actor.Parent is Player)
             {
-                if (actor.Parent is Player)
-                {
-                    _turnNumber++;
-                }
+                _turnNumber++;
+            }
 
-                // Perform the action
-                var result = action.Perform();
+            var result = action.Perform();
 
-                // Handle alternate actions (e.g., bumping into an enemy becomes an attack)
-                while (result.Alternate != null)
-                {
-                    // Add time for the original action if it had a cost
-                    if (result.TimeCost > 0)
-                    {
-                        actor.Time += result.TimeCost;
-                    }
-
-                    // Perform the alternate action
-                    action = result.Alternate;
-                    result = action.Perform();
-                }
-
-                // Add time cost for the performed action
-                if (result.Succeeded)
+            while (result.Alternate != null)
+            {
+                if (result.TimeCost > 0)
                 {
                     actor.Time += result.TimeCost;
                 }
+
+                action = result.Alternate;
+                result = action.Perform();
             }
 
-            return true; // Turn was processed, continue loop
+            if (result.Succeeded)
+            {
+                actor.Time += result.TimeCost;
+                PrintQueue();
+            }
         }
 
         /// <summary>
@@ -195,7 +186,37 @@ namespace Mut8.Scripts.Core
             foreach (var actor in tempList)
             {
                 actor.Time -= minTime;
-                _actorQueue.Enqueue(actor, actor.Time);
+                _actorQueue.Enqueue(actor, (actor.Time, _insertionCounter++));
+            }
+        }
+        
+        /// <summary>
+        /// Prints the current state of the actor queue to debug output.
+        /// </summary>
+        private void PrintQueue()
+        {
+            var tempList = new List<(Actor actor, int time)>();
+            
+            // Collect all actors from the queue
+            while (_actorQueue.Count > 0)
+            {
+                var actor = _actorQueue.Dequeue();
+                tempList.Add((actor, actor.Time));
+            }
+            
+            // Print the queue state
+            System.Diagnostics.Debug.WriteLine("=== Actor Queue ===");
+            foreach (var (actor, time) in tempList.OrderBy(x => x.time))
+            {
+                var actorName = actor.Parent?.Name ?? actor.GetType().Name;
+                System.Diagnostics.Debug.WriteLine($"  {actorName} - Time: {time}");
+            }
+            System.Diagnostics.Debug.WriteLine("==================");
+            
+            // Restore the queue
+            foreach (var (actor, time) in tempList)
+            {
+                _actorQueue.Enqueue(actor, (time, _insertionCounter++));
             }
         }
     }

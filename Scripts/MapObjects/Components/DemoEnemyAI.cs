@@ -29,6 +29,10 @@ namespace Mut8.Scripts.MapObjects.Components
 
             var firstPoint = path.GetStep(0);
             var direction = Direction.GetDirection(Parent.Position, firstPoint);
+            
+            // @PG: Handle this differently later. For now, if the enemy can't move in the desired direction, just wait.
+            if (!Parent.CanMoveIn(direction))
+                return new WaitAction(Parent);
 
             return new MoveAction(Parent, direction);
         }

@@ -13,7 +13,7 @@ namespace Mut8.Scripts.MapObjects
             Name = "Player";
 
             // Actor component (enables turn-based actions)
-            AllComponents.Add(new Actor(100));
+            AllComponents.Add(new Actor(0));
 
             // Motion control
             var motionControl = new CustomKeybindingsComponent();

@@ -69,7 +69,6 @@ namespace Mut8.Scripts.MapObjects.Components
             if (_nextAction != null)
             {
                 var action = _nextAction;
-                _nextAction = null;
                 return action;
             }
 
@@ -82,6 +81,11 @@ namespace Mut8.Scripts.MapObjects.Components
 
             // No action available
             return null;
+        }
+        
+        public virtual void ClearNextAction()
+        {
+            _nextAction = null;
         }
     }
 }
