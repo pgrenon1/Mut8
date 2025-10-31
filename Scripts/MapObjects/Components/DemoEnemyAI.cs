@@ -1,4 +1,5 @@
 ﻿using GoRogue.GameFramework;
+using Mut8.Scripts.Actions;
 using Mut8.Scripts.MapObjects;
 using SadRogue.Integration;
 using SadRogue.Integration.Components;
@@ -15,24 +16,21 @@ namespace Mut8.Scripts.MapObjects.Components
             : base(false, false, false, false)
         { }
 
-        public void TakeTurn()
+        public IAction? GenerateAction()
         {
-            if (Parent?.CurrentMap == null) return;
-            if (!Parent.CurrentMap.PlayerFOV.CurrentFOV.Contains(Parent.Position)) return;
+            if (Parent?.CurrentMap == null) return new WaitAction(Parent);
+            if (!Parent.CurrentMap.PlayerFOV.CurrentFOV.Contains(Parent.Position)) return new WaitAction(Parent);
 
             Player? player = Engine.MainGame!.Player;
-            if (player == null) return;
+            if (player == null) return new WaitAction(Parent);
 
             var path = Parent.CurrentMap.AStar.ShortestPath(Parent.Position, player.Position);
-            if (path == null) return;
+            if (path == null) return new WaitAction(Parent);
 
             var firstPoint = path.GetStep(0);
-            if (Parent.CanMove(firstPoint))
-            {
-                Engine.MainGame.MessagePanel.AddMessage($"An enemy moves {Direction.GetDirection(Parent.Position, firstPoint)}!");
-                Parent.Position = firstPoint;
-            }
+            var direction = Direction.GetDirection(Parent.Position, firstPoint);
 
+            return new MoveAction(Parent, direction);
         }
     }
 }

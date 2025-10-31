@@ -1,5 +1,4 @@
 ﻿using GoRogue.Random;
-using Mut8.Scripts;
 using Mut8.Scripts.MapObjects;
 using Mut8.Scripts.MapObjects.Components;
 using Mut8.Scripts.Maps;
@@ -10,9 +9,9 @@ namespace Mut8.Scripts.Screens
 {
     internal class MainGame : ScreenObject
     {
-        public GameMap Map;
-        public MessageLogPanel MessagePanel;
-        public Player Player;
+        public GameMap? Map;
+        public MessageLogPanel? MessagePanel;
+        public Player? Player;
         public StatusPanel? StatusPanel;
         public GameLoop GameLoop;
 
@@ -26,37 +25,23 @@ namespace Mut8.Scripts.Screens
 
         public MainGame()
         {
-            CreateMap();
-
-            GameLoop = new GameLoop(Map!);
-
-            CreatePlayer();
-
-            // Center view on player as they move
-            SadConsole.Components.SurfaceComponentFollowTarget viewLock = new() { Target = Player };
-            Map!.DefaultRenderer?.SadComponents.Add(viewLock);
+            GameLoop = new GameLoop();
 
             CreateMessagePanel();
 
             CreateStatusPanel();
-
-            // Add Player death handler?
         }
 
         public override void Update(TimeSpan delta)
         {
             base.Update(delta);
 
-            // Process the game loop continuously until we need player input
-            while (GameLoop.Process())
-            {
-                // Keep processing until a turn is blocked (waiting for player input)
-            }
+            GameLoop.Process();
         }
 
         private void CreateStatusPanel()
         {
-            StatusPanel = new StatusPanel(STATUS_PANEL_WIDTH, Engine.WINDOW_HEIGHT, Player)
+            StatusPanel = new StatusPanel(STATUS_PANEL_WIDTH, Engine.WINDOW_HEIGHT)
             {
                 Parent = this,
                 Position = new(Engine.WINDOW_WIDTH - STATUS_PANEL_WIDTH, 0)
@@ -97,6 +82,21 @@ namespace Mut8.Scripts.Screens
             Map.AddEntity(Player);
             Player.AllComponents.GetFirst<PlayerFOVController>().CalculateFOV();
             PlayerCreated?.Invoke(this, EventArgs.Empty);
+        }
+
+        internal void StartGame()
+        {
+            CreateMap();
+
+            CreatePlayer();
+
+            StatusPanel?.SetPlayer(Player);
+
+            // @PG: removing this because it makes the camera update only after every turn is done instead of as soon as the position changes.
+            // That made the camera lag behind a bit. Instead, in MoveAction, I recenter the camera ASAP
+            // Center view on player as they move
+            //SadConsole.Components.SurfaceComponentFollowTarget viewLock = new() { Target = Player };
+            //Map.DefaultRenderer?.SadComponents.Add(viewLock);
         }
     }
 }

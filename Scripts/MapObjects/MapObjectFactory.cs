@@ -8,21 +8,9 @@ using SadRogue.Primitives.GridViews;
 
 namespace Mut8.Scripts.MapObjects
 {
-    /// <summary>
-    /// Simple class with some static functions for creating map objects.
-    /// </summary>
-    /// <remarks>
-    /// CUSTOMIZATION:  This demonstrates how to create objects based on "composition," which means using components.
-    /// The integration library offers a robust component system that integrates both SadConsole's and GoRogue's components
-    /// into one interface. You can either add more functions to create more objects, or remove this and
-    /// implement the "factory" system in the GoRogue.Factories namespace, which provides a more robust interface for it.
-    ///
     /// Note that SadConsole components cannot be attached directly to `RogueLikeCell` or `MemoryAwareRogueLikeCell`
     /// instances for reasons pertaining to performance.
-    ///
-    /// Alternatively, you can remove this system and choose to use inheritance to create your objects instead - the
-    /// integration library also supports creating subclasses or RogueLikeCell and RogueLikeEntity.
-    /// </remarks>
+
     internal static class MapObjectFactory
     {
         public static AdvancedFactory<string, Point, RogueLikeCell>? TerrainFactory;
@@ -69,6 +57,8 @@ namespace Mut8.Scripts.MapObjects
                             Position = pos
                         };
                         enemy.AllComponents.Add(new DemoEnemyAI());
+                        enemy.AllComponents.Add(new Actor(50));
+                        enemy.Name = "Gnome";
                         return enemy;
                     }
                 )

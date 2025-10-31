@@ -46,6 +46,8 @@ namespace Mut8
             MainGame = new MainGame();
             host.Screen = MainGame;
 
+            MainGame.StartGame();
+
             // Create a MapScreen and set it as the active screen so that it processes input and renders itself.
             //GameScreen = new MapScreen(map);
             //host.Screen = GameScreen;

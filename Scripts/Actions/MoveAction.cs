@@ -1,5 +1,7 @@
 using GoRogue.GameFramework;
+using Mut8.Scripts.MapObjects;
 using Mut8.Scripts.MapObjects.Components;
+using Mut8.Scripts.Maps;
 using SadRogue.Integration;
 
 namespace Mut8.Scripts.Actions
@@ -11,7 +13,12 @@ namespace Mut8.Scripts.Actions
     {
         private readonly Direction _direction;
 
-        public MoveAction(RogueLikeEntity entity, Direction direction) 
+        /// <summary>
+        /// Base time cost for moving one tile.
+        /// </summary>
+        public int BaseMoveCost = 100;
+
+        public MoveAction(RogueLikeEntity entity, Direction direction)
             : base(entity)
         {
             _direction = direction;
@@ -34,7 +41,20 @@ namespace Mut8.Scripts.Actions
 
                 // Perform the move
                 Entity.Position = newPosition;
-                return ActionResult.Success;
+
+                // If this is the player, immediately center the camera on them
+                if (Entity is Player && Entity.CurrentMap is GameMap gameMap)
+                {
+                    var renderer = gameMap.DefaultRenderer;
+                    if (renderer != null)
+                    {
+                        renderer.Surface.View = renderer.Surface.View.WithCenter(Entity.Position);
+                    }
+                }
+
+                Engine.MainGame?.MessagePanel.AddMessage($"[{Engine.MainGame.GameLoop.TurnNumber} - {DateTime.Now.ToString("HH:mm:ss:ffff")}] {Entity.Name} moves {_direction.ToString().ToLower()}.");
+
+                return ActionResult.SuccessWithTime(BaseMoveCost);
             }
 
             // Movement failed (wall, out of bounds, etc.)

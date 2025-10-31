@@ -11,21 +11,22 @@ namespace Mut8.Scripts.MapObjects.Components
     internal class Actor : RogueLikeComponentBase<RogueLikeEntity>
     {
         /// <summary>
-        /// The current energy level of this actor. When energy reaches the threshold,
-        /// the actor can take a turn.
+        /// The current time value of this actor in the turn queue.
+        /// Lower values mean the actor acts sooner.
         /// </summary>
-        public int Energy { get; set; }
+        public int Time { get; set; }
 
         /// <summary>
-        /// How much energy this actor gains per game loop iteration.
-        /// Higher speed means more frequent turns.
+        /// The base amount of time units this actor gets per turn.
+        /// This can be modified by stats or status effects.
         /// </summary>
-        public int Speed { get; set; } = 100;
+        public int BaseTimeUnitsPerTurn { get; set; } = 100;
 
         /// <summary>
-        /// The energy threshold required to take a turn.
+        /// The remaining time units available for this actor's current turn.
+        /// Actions consume from this pool.
         /// </summary>
-        public const int EnergyThreshold = 100;
+        public int RemainingTimeUnits { get; set; }
 
         /// <summary>
         /// The next action queued for this actor (primarily used for player input).
@@ -33,32 +34,63 @@ namespace Mut8.Scripts.MapObjects.Components
         private IAction? _nextAction;
 
         public Actor() 
-            : base(false, false, false, false)
+          : base(false, false, false, false)
         {
-            Energy = 0;
+            Time = 0;
+            RemainingTimeUnits = 0;
         }
 
-        public Actor(int speed) 
-            : base(false, false, false, false)
+        public Actor(int baseTimeUnitsPerTurn) 
+        : base(false, false, false, false)
         {
-            Speed = speed;
-            Energy = 0;
+            BaseTimeUnitsPerTurn = baseTimeUnitsPerTurn;
+            Time = 0;
+            RemainingTimeUnits = 0;
+        }
+
+        public override void OnAdded(IScreenObject host)
+        {
+            base.OnAdded(host);
+
+            Engine.MainGame!.GameLoop.AddActor(this);
+        }
+
+        public override void OnRemoved(IScreenObject host)
+        {
+            base.OnRemoved(host);
+
+            Engine.MainGame!.GameLoop.RemoveActor(this);
         }
 
         /// <summary>
-        /// Checks if this actor has enough energy to take a turn.
+        /// Gets the time units available for this turn, potentially modified by stats or status effects.
         /// </summary>
-        public bool CanTakeTurn() => Energy >= EnergyThreshold;
+        public int GetTimeUnitsPerTurn()
+        {
+            // TODO: Apply modifiers from stats, status effects, etc.
+            return BaseTimeUnitsPerTurn;
+        }
 
         /// <summary>
-        /// Grants energy to this actor based on their speed.
+        /// Starts a new turn for this actor, granting them their time unit pool.
         /// </summary>
-        public void GainEnergy() => Energy += Speed;
+        public void StartTurn()
+        {
+            RemainingTimeUnits = GetTimeUnitsPerTurn();
+        }
 
         /// <summary>
-        /// Consumes energy after performing an action.
+        /// Consumes time units after performing an action.
         /// </summary>
-        public void ConsumeEnergy(int amount = EnergyThreshold) => Energy -= amount;
+        public void ConsumeTime(int amount)
+        {
+            RemainingTimeUnits -= amount;
+        }
+
+        /// <summary>
+        /// Checks if this actor's turn is over (no more time units available).
+        /// </summary>
+        public bool IsTurnOver() => RemainingTimeUnits <= 0;
 
         /// <summary>
         /// Sets the next action to be performed by this actor (used for player input).
@@ -75,9 +107,23 @@ namespace Mut8.Scripts.MapObjects.Components
         /// </summary>
         public virtual IAction? GetAction()
         {
-            var action = _nextAction;
-            _nextAction = null; // Only perform once
-            return action;
+            // First check if there's a queued action (from player input)
+            if (_nextAction != null)
+            {
+                var action = _nextAction;
+                _nextAction = null;
+                return action;
+            }
+
+            // Otherwise, check for AI component
+            var aiComponent = Parent?.AllComponents.GetFirstOrDefault<DemoEnemyAI>();
+            if (aiComponent != null)
+            {
+                return aiComponent.GenerateAction();
+            }
+
+            // No action available
+            return null;
         }
     }
 }

@@ -8,13 +8,20 @@ namespace Mut8.Scripts.Screens.Surfaces
 {
     internal class StatusPanel : ControlsConsole
     {
-        public ProgressBar HPBar;
-        public readonly Player Player;
+        public ProgressBar? HPBar;
+        private Player Player;
 
-        public StatusPanel(int width, int height, Player player) : base(width, height)
+        public StatusPanel(int width, int height) : base(width, height)
+        {
+            CreateHPBar();
+        }
+
+        public void SetPlayer(Player player)
         {
             Player = player;
-            CreateHPBar();
+
+            Engine.MainGame!.Player.AllComponents.GetFirst<Health>().HPChanged += OnPlayerHPChanged;
+            UpdateHPBar();
         }
 
         private void CreateHPBar()
@@ -30,15 +37,6 @@ namespace Mut8.Scripts.Screens.Surfaces
             HPBar.SetThemeColors(hpBarColors);
 
             Controls.Add(HPBar);
-
-            Player.AllComponents.GetFirst<Health>().HPChanged += OnPlayerHPChanged;
-
-            UpdateHPBar();
-        }
-
-        private void OnPlayerCreated(object? sender, EventArgs e)
-        {
-            CreateHPBar();
         }
 
         private void OnPlayerHPChanged(object? sender, EventArgs e)
@@ -48,7 +46,7 @@ namespace Mut8.Scripts.Screens.Surfaces
 
         private void UpdateHPBar()
         {
-            var health = Player.AllComponents.GetFirst<Health>();
+            var health = Engine.MainGame!.Player.AllComponents.GetFirst<Health>();
             HPBar.Progress = health.HP;
             HPBar.DisplayText = $"HP: {health.HP} / {health.MaxHP}";
         }
