@@ -4,6 +4,7 @@ using Mut8.Scripts.MapObjects;
 using Mut8.Scripts.MapObjects.Components;
 using Mut8.Scripts.Maps;
 using Mut8.Scripts.Screens.Surfaces;
+using Mut8.Scripts.UI;
 using ShaiRandom.Generators;
 
 namespace Mut8.Scripts.Screens
@@ -14,6 +15,8 @@ namespace Mut8.Scripts.Screens
         public MessageLogPanel? MessagePanel;
         public Player? Player;
         public StatusPanel? StatusPanel;
+        public ScreenObject? StatusLayoutContainer;
+        public VerticalLayoutComponent? StatusLayoutComponent;
         public GameLoop GameLoop;
 
         private const int MAP_WIDTH = 100;
@@ -42,11 +45,25 @@ namespace Mut8.Scripts.Screens
 
         private void CreateStatusPanel()
         {
-            StatusPanel = new StatusPanel(STATUS_PANEL_WIDTH, Engine.WINDOW_HEIGHT)
+            // Create a container screen object for the layout
+            StatusLayoutContainer = new ScreenObject()
             {
                 Parent = this,
                 Position = new(Engine.WINDOW_WIDTH - STATUS_PANEL_WIDTH, 0)
             };
+
+            // Create and add the vertical layout component
+            StatusLayoutComponent = new VerticalLayoutComponent(STATUS_PANEL_WIDTH, Engine.WINDOW_HEIGHT);
+            StatusLayoutContainer.SadComponents.Add(StatusLayoutComponent);
+
+            // Create the status panel and add it to the layout group
+            StatusPanel = new StatusPanel(STATUS_PANEL_WIDTH, Engine.WINDOW_HEIGHT)
+            {
+                Parent = StatusLayoutContainer,
+                Position = new(0, 0)
+            };
+            StatusLayoutComponent.AddChild(StatusPanel, flexGrow: 1f);
+            //layoutHandle.MaxSize = Engine.WINDOW_HEIGHT / 2;
         }
 
         private void CreateMessagePanel()
