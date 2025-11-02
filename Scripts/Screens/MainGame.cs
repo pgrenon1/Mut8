@@ -82,6 +82,11 @@ namespace Mut8.Scripts.Screens
             Player.Position = GlobalRandom.DefaultRNG.RandomPosition(Map!.WalkabilityView, true);
             Map.AddEntity(Player);
             Player.AllComponents.GetFirst<PlayerFOVController>().CalculateFOV();
+            var renderer = Map.DefaultRenderer;
+            if (renderer != null)
+            {
+                renderer.Surface.View = renderer.Surface.View.WithCenter(Player.Position);
+            }
             PlayerCreated?.Invoke(this, EventArgs.Empty);
         }
 

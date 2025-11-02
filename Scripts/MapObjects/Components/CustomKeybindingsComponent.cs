@@ -1,4 +1,5 @@
-﻿using GoRogue.GameFramework;
+﻿using System.Collections.ObjectModel;
+using GoRogue.GameFramework;
 using Mut8.Scripts.Actions;
 using SadConsole.Input;
 using SadRogue.Integration;
@@ -28,6 +29,47 @@ namespace Mut8.Scripts.MapObjects.Components
                 var revealComponent = Parent!.AllComponents.GetFirstOrDefault<RevealAllTilesComponent>();
                 revealComponent?.RevealAllTiles();
             });
+            
+            // Debug keybindings for adding/removing genes
+            var geneValues = Enum.GetValues<Gene>();
+            var numberKeys = new[] { Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7, Keys.D8, Keys.D9, Keys.D0 };
+            
+            for (int i = 0; i < Math.Min(geneValues.Length, numberKeys.Length); i++)
+            {
+                var gene = geneValues[i];
+                var key = numberKeys[i];
+                
+                // Number key: increment gene
+                SetAction(key, () =>
+                {
+                    var genome = Parent!.AllComponents.GetFirstOrDefault<Genome>();
+                    if (genome == null) 
+                        return;
+                    
+                    var currentValue = genome.GetGene(gene, 0f);
+                    genome.SetGene(gene, currentValue + 1f);
+                });
+                
+                // Shift + Number key: decrement gene
+                SetAction(new InputKey(key, KeyModifiers.Shift), () =>
+                {
+                    var genome = Parent!.AllComponents.GetFirstOrDefault<Genome>();
+                    if (genome == null) 
+                        return;
+                    
+                    var currentValue = genome.GetGene(gene, 0f);
+                    var newValue = currentValue - 1f;
+                        
+                    if (newValue <= 0f)
+                    {
+                        genome.RemoveGene(gene);
+                    }
+                    else
+                    {
+                        genome.SetGene(gene, newValue);
+                    }
+                });
+            }
         }
 
         protected override void MotionHandler(Direction direction)

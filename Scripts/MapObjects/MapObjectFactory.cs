@@ -58,6 +58,8 @@ namespace Mut8.Scripts.MapObjects
                         };
                         enemy.AllComponents.Add(new DemoEnemyAI());
                         enemy.AllComponents.Add(new Actor(0));
+                        enemy.AllComponents.Add(new Health(1));
+                        enemy.AllComponents.Add(new CombatStats(1, 0));
                         enemy.Name = "Gnome";
                         return enemy;
                     }

@@ -33,12 +33,9 @@ namespace Mut8.Scripts.Core
         private int _turnNumber;
         private long _insertionCounter = 0;
 
-        public int TurnNumber => _turnNumber;
-
         public GameLoop()
         {
             AddActor(new TurnEventActor(100));
-            _turnNumber = 0;
         }
 
         /// <summary>
@@ -134,12 +131,7 @@ namespace Mut8.Scripts.Core
             }
             
             actor.ClearNextAction();
-
-            if (actor.Parent is Player)
-            {
-                _turnNumber++;
-            }
-
+            
             var result = action.Perform();
 
             while (result.Alternate != null)

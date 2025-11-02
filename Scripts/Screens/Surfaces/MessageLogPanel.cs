@@ -48,7 +48,7 @@ namespace Mut8.Scripts.Screens.Surfaces
             if (_lastMessageCount > 1)
             {
                 Cursor.Position = Cursor.Position.Translate(0, -1);
-                Cursor.Print($"{_lastMessage} (x{_lastMessageCount})");
+                Cursor.Print($"{DateTime.Now.ToString("HH:mm:ss:ffff")} : {_lastMessage} (x{_lastMessageCount})");
             }
             else
                 Cursor.Print(_lastMessage);

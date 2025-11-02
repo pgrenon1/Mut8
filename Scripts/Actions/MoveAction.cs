@@ -42,6 +42,8 @@ namespace Mut8.Scripts.Actions
                 // Perform the move
                 Entity.Position = newPosition;
 
+                var moveCost = BaseMoveCost;
+                
                 // If this is the player, immediately center the camera on them
                 if (Entity is Player)
                 {
@@ -56,9 +58,18 @@ namespace Mut8.Scripts.Actions
                     }
                 }
 
-                Engine.MainGame?.MessagePanel?.AddMessage($"[{Engine.MainGame.GameLoop.TurnNumber} - {DateTime.Now.ToString("HH:mm:ss:ffff")}] {Entity.Name} moves {_direction.ToString().ToLower()}.");
+                Engine.MainGame?.MessagePanel?.AddMessage($"{Entity.Name} moves {_direction.ToString().ToLower()}.");
 
-                return ActionResult.SuccessWithTime(BaseMoveCost);
+                return ActionResult.SuccessWithTime(moveCost);
+            }
+            else
+            {
+                RogueLikeEntity otherEntity = Entity.CurrentMap?.GetEntityAt<RogueLikeEntity>(newPosition);
+                if (otherEntity != null && otherEntity.AllComponents.Contains<Health>())
+                {
+                    // Return alternate action: attack
+                    return ActionResult.AlternateAction(new MeleeAttackAction(Entity, otherEntity));
+                }
             }
 
             // Movement failed (wall, out of bounds, etc.)

@@ -11,6 +11,9 @@ namespace Mut8.Scripts.MapObjects
             : base(Color.White, Color.Black, 1792, false, layer: (int)GameMap.Layer.Monsters)
         {
             Name = "Player";
+            
+            // Adding Genome first so other components can reference it
+            AllComponents.Add(new Genome());
 
             // Actor component (enables turn-based actions)
             AllComponents.Add(new Actor(0));
@@ -29,6 +32,9 @@ namespace Mut8.Scripts.MapObjects
 
             // Health
             AllComponents.Add(new Health(100));
+            
+            // CombatStats
+            AllComponents.Add(new CombatStats(1, 0));
         }
     }
 }

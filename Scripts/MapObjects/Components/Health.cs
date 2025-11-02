@@ -1,4 +1,5 @@
-﻿using SadRogue.Integration;
+﻿using Mut8.Scripts.Utils;
+using SadRogue.Integration;
 using SadRogue.Integration.Components;
 
 namespace Mut8.Scripts.MapObjects.Components
@@ -6,20 +7,20 @@ namespace Mut8.Scripts.MapObjects.Components
     internal class Health : RogueLikeComponentBase<RogueLikeEntity>
     {
         private Genome? _genome;
-        
-        public int BaseMaxHP { get; set; }
-        
-        public int MaxHP { get; private set; }
 
-        private int _hp;
-        public int HP
+        private float BaseMaxHP { get; set; }
+        
+        public float MaxHP { get; private set; }
+
+        private float _hp;
+        public float HP
         {
             get => _hp;
             private set
             {
                 if (_hp == value) return;
 
-                _hp = Math.Clamp(value, 0, MaxHP);
+                _hp = Math.Clamp(value, 0f, MaxHP);
                 HPChanged?.Invoke(this, EventArgs.Empty);
             }
         }
@@ -27,7 +28,7 @@ namespace Mut8.Scripts.MapObjects.Components
         public event EventHandler? HPChanged;
         public event EventHandler? Died;
 
-        public Health(int baseMaxHP = 100) : base(false, false, false, false)
+        public Health(float baseMaxHP = 100f) : base(false, false, false, false)
         {
             BaseMaxHP = baseMaxHP;
             MaxHP = baseMaxHP;
@@ -40,8 +41,7 @@ namespace Mut8.Scripts.MapObjects.Components
             
             if (_genome != null)
             {
-                _genome.GenomeMutated += OnGenomeMutated;
-                _genome.GeneChanged += OnGeneChanged;
+                _genome.RegisterGeneChangedCallback(Gene.Stout, OnStoutGeneChanged);
             }
             
             RecalculateMaxHP();
@@ -52,37 +52,64 @@ namespace Mut8.Scripts.MapObjects.Components
         {
             if (_genome != null)
             {
-                _genome.GenomeMutated -= OnGenomeMutated;
-                _genome.GeneChanged -= OnGeneChanged;
+                _genome.UnregisterGeneChangedCallback(Gene.Stout, OnStoutGeneChanged);
             }
             
             base.OnRemoved(parent);
         }
         
-        private void OnGenomeMutated(object? sender, EventArgs e)
+        private void OnStoutGeneChanged(float oldValue, float newValue)
         {
             RecalculateMaxHP();
-        }
-        
-        private void OnGeneChanged(object? sender, GeneChangedEventArgs e)
-        {
-            if (e.Gene == Gene.Stout)
-            {
-                RecalculateMaxHP();
-            }
         }
         
         private void RecalculateMaxHP()
         {
             float stoutModifier = _genome?.GetGene(Gene.Stout, 0f) ?? 0f;
-            int newMaxHP = (int)(BaseMaxHP * (1f + stoutModifier));
+            float newMaxHP = BaseMaxHP + (GameData.StoutGeneHPMultiplier * stoutModifier);
             
-            if (newMaxHP != MaxHP)
+            if (!newMaxHP.IsEqualWithTolerance(MaxHP))
             {
+                float hpRatio = HP / MaxHP;
                 MaxHP = newMaxHP;
-                // Clamp current HP to new max
                 HP = Math.Min(HP, MaxHP);
+                
+                HPChanged?.Invoke(this, EventArgs.Empty);
             }
+        }
+
+        public void TakeDamage(float damage)
+        {
+            if (damage < 0f)
+            {
+                damage = 0f;
+            }
+
+            HP -= damage;
+            
+            if (HP <= 0f)
+            {
+                Death();
+            }
+        }
+
+        private void Death()
+        {
+            Died?.Invoke(this, EventArgs.Empty);
+            
+            Engine.MainGame?.MessagePanel?.AddMessage($"{Parent!.Name} has died.");
+            
+            Parent!.CurrentMap?.RemoveEntity(Parent);
+        }
+
+        public void Heal(float amount)
+        {
+            if (amount < 0f)
+            {
+                amount = 0f;
+            }
+
+            HP += amount;
         }
     }
 }

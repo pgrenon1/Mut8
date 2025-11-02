@@ -1,7 +1,6 @@
 ﻿using SadRogue.Integration;
 using SadRogue.Integration.Components;
 using Mut8.Scripts.Maps;
-using System.Linq;
 
 namespace Mut8.Scripts.MapObjects.Components
 {
