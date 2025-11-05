@@ -1,0 +1,13 @@
+﻿{
+  "PlayerBaseMaxHP": 100.0,
+  "PlayerBaseAttackPower": 1.0,
+  "PlayerBaseDefense": 0.0,
+  "MaxGeneValue": 100.0,
+  "StoutGeneHPMultiplier": 2.0,
+  "StrongGeneAttackMultiplier": 3.0,
+  "ResilientGeneDefenseMultiplier": 3.0,
+  "QuickGeneSpeedMultiplier": 2.0,
+  "SmartGeneXPMultiplier": 1.0,
+  "StealthyGeneDetectionMultiplier": 1.0,
+  "PhotosyntheticGeneRegenMultiplier": 5.0
+}

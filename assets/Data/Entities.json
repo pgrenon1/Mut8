@@ -1,0 +1,68 @@
+﻿{
+  "entities": {
+    "player": {
+      "name": "Player",
+      "maxHP": 100,
+      "attack": 10,
+      "defense": 1
+    },
+    "gnome": {
+      "name": "Gnome",
+      "maxHP": 5,
+      "attack": 0,
+      "defense": 0
+    },
+    "orc": {
+      "name": "Orc",
+      "maxHP": 80,
+      "attack": 12,
+      "defense": 0
+    },
+    "goblin": {
+      "name": "Goblin",
+      "maxHP": 30,
+      "attack": 8,
+      "defense": 0
+    }
+  },
+  "terrain": {
+    "wall": {
+      "name": "Wall",
+      "blocking": true,
+      "transparent": false,
+      "glyph": 1034,
+      "bitmaskSprites": [ 920, 863, 919, 862, 921, 864, 750, 975, 977, 807, 976, 1032, 978, 1031, 974, 1034 ],
+      "genome": {
+        "resilient": 10
+      }
+    },
+    "floor": {
+      "name": "Floor",
+      "blocking": false,
+      "transparent": true,
+      "glyph": 2782
+    },
+    "tree": {
+      "name": "Tree",
+      "blocking": true,
+      "transparent": false,
+      "glyph": 526,
+      "genome": {
+        "stout": 5
+      }
+    },
+    "door": {
+      "name": "Door",
+      "blocking": true,
+      "transparent": false,
+      "openable": true,
+      "sprite": "door_sprite"
+    },
+    "water": {
+      "name": "Water",
+      "blocking": true,
+      "transparent": true,
+      "sprite": "water_sprite"
+    }
+  }
+}

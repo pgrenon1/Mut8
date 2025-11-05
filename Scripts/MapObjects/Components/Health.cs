@@ -1,115 +1,155 @@
-﻿using Mut8.Scripts.Utils;
+﻿using Mut8.Scripts.Core;
+using Mut8.Scripts.Utils;
 using SadRogue.Integration;
 using SadRogue.Integration.Components;
 
-namespace Mut8.Scripts.MapObjects.Components
+namespace Mut8.Scripts.MapObjects.Components;
+
+internal class Health : RogueLikeComponentBase<RogueLikeEntity>
 {
-    internal class Health : RogueLikeComponentBase<RogueLikeEntity>
+    private Genome? _genome;
+
+    private float BaseMaxHP { get; set; }
+    private float BaseHealthRegen { get; set; }
+    
+    public float MaxHP { get; private set; }
+
+    private float _hp;
+    public float HP
     {
-        private Genome? _genome;
-
-        private float BaseMaxHP { get; set; }
-        
-        public float MaxHP { get; private set; }
-
-        private float _hp;
-        public float HP
+        get => _hp;
+        private set
         {
-            get => _hp;
-            private set
-            {
-                if (_hp == value) return;
+            if (_hp == value) return;
 
-                _hp = Math.Clamp(value, 0f, MaxHP);
-                HPChanged?.Invoke(this, EventArgs.Empty);
-            }
+            _hp = Math.Clamp(value, 0f, MaxHP);
+            HPChanged?.Invoke(this, EventArgs.Empty);
         }
+    }
 
-        public event EventHandler? HPChanged;
-        public event EventHandler? Died;
+    public event EventHandler? HPChanged;
+    public event EventHandler? Died;
 
-        public Health(float baseMaxHP = 100f) : base(false, false, false, false)
-        {
-            BaseMaxHP = baseMaxHP;
-            MaxHP = baseMaxHP;
-        }
+    public Health(float baseMaxHP = 100f, float baseHealthRegen = 1f) : base(false, false, false, false)
+    {
+        BaseMaxHP = baseMaxHP;
+        BaseHealthRegen = baseHealthRegen;
+        MaxHP = baseMaxHP;
+    }
         
-        public override void OnAdded(IScreenObject parent)
-        {
-            base.OnAdded(parent);
-            _genome = parent.GetSadComponent<Genome>();
+    public override void OnAdded(IScreenObject parent)
+    {
+        base.OnAdded(parent);
+        _genome = parent.GetSadComponent<Genome>();
             
-            if (_genome != null)
-            {
-                _genome.RegisterGeneChangedCallback(Gene.Stout, OnStoutGeneChanged);
-            }
-            
-            RecalculateMaxHP();
-            HP = MaxHP;
-        }
-        
-        public override void OnRemoved(IScreenObject parent)
+        if (_genome != null)
         {
-            if (_genome != null)
-            {
-                _genome.UnregisterGeneChangedCallback(Gene.Stout, OnStoutGeneChanged);
-            }
-            
-            base.OnRemoved(parent);
+            _genome.RegisterGeneChangedCallback(Gene.Stout, OnStoutGeneChanged);
         }
-        
-        private void OnStoutGeneChanged(float oldValue, float newValue)
-        {
-            RecalculateMaxHP();
-        }
-        
-        private void RecalculateMaxHP()
-        {
-            float stoutModifier = _genome?.GetGene(Gene.Stout, 0f) ?? 0f;
-            float newMaxHP = BaseMaxHP + (GameData.StoutGeneHPMultiplier * stoutModifier);
             
-            if (!newMaxHP.IsEqualWithTolerance(MaxHP))
-            {
-                float hpRatio = HP / MaxHP;
-                MaxHP = newMaxHP;
-                HP = Math.Min(HP, MaxHP);
+        RecalculateMaxHP();
+        HP = MaxHP;
+
+        TurnEventActor? turnEventActor = Engine.MainGame?.GameLoop.GetTurnEventActor();
+        if (turnEventActor != null)
+        {
+            turnEventActor.OnTurn += ApplyHealthRegen;
+        }
+    }
+        
+    public override void OnRemoved(IScreenObject parent)
+    {
+        if (_genome != null)
+        {
+            _genome.UnregisterGeneChangedCallback(Gene.Stout, OnStoutGeneChanged);
+        }
+            
+        TurnEventActor? turnEventActor = Engine.MainGame?.GameLoop.GetTurnEventActor();
+        if (turnEventActor != null)
+        {
+            turnEventActor.OnTurn -= ApplyHealthRegen;
+        }
+            
+        base.OnRemoved(parent);
+    }
+        
+    private void OnStoutGeneChanged(float oldValue, float newValue)
+    {
+        RecalculateMaxHP();
+    }
+        
+    private void RecalculateMaxHP()
+    {
+        if (_genome == null)
+            return;
+        
+        float stoutGeneValue = _genome.GetGene(Gene.Stout);
+        float maxHPMultiplier = 1f + (GameData.StoutGeneHPMultiplier - 1f) * stoutGeneValue;
+        float newMaxHP = MathF.Round(BaseMaxHP * maxHPMultiplier);
+            
+        if (newMaxHP.IsEqualWithTolerance(MaxHP))
+            return;
+
+        float hpRatio = HP / MaxHP;
+        MaxHP = newMaxHP;
+        HP = MathF.Round(hpRatio * MaxHP);
                 
-                HPChanged?.Invoke(this, EventArgs.Empty);
-            }
-        }
+        HPChanged?.Invoke(this, EventArgs.Empty);
+    }
 
-        public void TakeDamage(float damage)
+    public float GetHealthRegen()
+    {
+        if (_genome == null)
+            return BaseHealthRegen;
+        
+        float photosyntheticGeneValue = _genome?.GetGene(Gene.Photosynthetic) ?? 0f;
+        float healthRegenModifier = 1f + (GameData.PhotosyntheticGeneRegenMultiplier - 1f) * photosyntheticGeneValue;
+        return BaseHealthRegen * healthRegenModifier;
+    }
+
+    public void TakeDamage(float damage)
+    {
+        if (damage < 0f)
         {
-            if (damage < 0f)
-            {
-                damage = 0f;
-            }
-
-            HP -= damage;
-            
-            if (HP <= 0f)
-            {
-                Death();
-            }
+            damage = 0f;
         }
 
-        private void Death()
+        HP -= damage;
+
+        if (HP <= 0f)
         {
-            Died?.Invoke(this, EventArgs.Empty);
-            
-            Engine.MainGame?.MessagePanel?.AddMessage($"{Parent!.Name} has died.");
-            
-            Parent!.CurrentMap?.RemoveEntity(Parent);
+            Death();
         }
+    }
 
-        public void Heal(float amount)
+    private void Death()
+    {
+        Died?.Invoke(this, EventArgs.Empty);
+
+        Engine.MainGame?.MessagePanel?.AddMessage($"{Parent!.Name} has died.");
+
+        Parent!.CurrentMap?.RemoveEntity(Parent);
+    }
+
+    public void Heal(float amount)
+    {
+        if (amount < 0f)
         {
-            if (amount < 0f)
-            {
-                amount = 0f;
-            }
-
-            HP += amount;
+            amount = 0f;
         }
+
+        HP += amount;
+    }
+
+    private void ApplyHealthRegen()
+    {
+        float healthRegen = GetHealthRegen();
+
+        if (healthRegen <= 0f || HP >= MaxHP)
+        {
+            return;
+        }
+
+        Heal(healthRegen);
     }
 }

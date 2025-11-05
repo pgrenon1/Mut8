@@ -1,13 +1,12 @@
-namespace Mut8.Scripts.Actions
+namespace Mut8.Scripts.Actions;
+
+/// <summary>
+/// Represents an action that can be performed by an actor in the game.
+/// </summary>
+public interface IAction
 {
     /// <summary>
-    /// Represents an action that can be performed by an actor in the game.
+    /// Performs the action and returns the result.
     /// </summary>
-    public interface IAction
-    {
-        /// <summary>
-        /// Performs the action and returns the result.
-        /// </summary>
-        ActionResult Perform();
-    }
+    ActionResult Perform();
 }
