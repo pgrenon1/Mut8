@@ -67,9 +67,32 @@ internal class CustomKeybindingsComponent : KeybindingsComponent<RogueLikeEntity
     {
         // Bind F1 key to reveal all tiles action
         SetAction(Keys.F1, RevealAllTiles);
+        
+        SetAction(Keys.Z, DamageSelf);
+        
+        SetAction(Keys.X, HealSelf);
+        
             
         // Debug keybindings for adding/removing genes
         SetGeneDebugActions();
+    }
+
+    private void HealSelf()
+    {
+        Health? health = Parent!.AllComponents.GetFirstOrDefault<Health>();
+        if (health == null) 
+            return;
+            
+        health.Heal(10f);
+    }
+
+    private void DamageSelf()
+    {
+        Health? health = Parent!.AllComponents.GetFirstOrDefault<Health>();
+        if (health == null) 
+            return;
+            
+        health.TakeDamage(10f);
     }
 
     private void IncrmentGene(Gene gene)
