@@ -7,6 +7,7 @@ using GoRogue.GameFramework;
 using Mut8.Scripts.Core;
 using SadRogue.Primitives.GridViews;
 using Newtonsoft.Json.Linq;
+using SadRogue.Integration.Keybindings;
 
 namespace Mut8.Scripts.MapObjects;
 
@@ -38,7 +39,66 @@ internal static class MapObjectFactory
     internal static IGameObject Floor(Point pos) => TerrainFactory!.Create("floor", pos);
     internal static IGameObject Wall(Point pos) => TerrainFactory!.Create("wall", pos);
     internal static IGameObject Tree(Point pos) => TerrainFactory!.Create("tree", pos);
+
+    /// <summary>
+    /// Parses a color from JSON token - supports both uint (hex) and string (color names)
+    /// </summary>
+    private static Color ParseColor(JToken? colorToken, Color defaultColor)
+    {
+        if (colorToken == null)
+            return defaultColor;
+
+        // Try to parse as uint (hex value)
+        if (colorToken.Type == JTokenType.Integer)
+        {
+            return new Color(colorToken.Value<uint>());
+        }
+
+        // Try to parse as string (color name)
+        if (colorToken.Type == JTokenType.String)
+        {
+            string colorName = colorToken.Value<string>() ?? "";
+
+            // Use reflection to find matching Color field
+            var colorType = typeof(Color);
+            var field = colorType.GetField(colorName,
+                System.Reflection.BindingFlags.Public |
+                System.Reflection.BindingFlags.Static |
+                System.Reflection.BindingFlags.IgnoreCase);
+
+            if (field != null && field.FieldType == typeof(Color))
+            {
+                return (Color)(field.GetValue(null) ?? defaultColor);
+            }
+
+            return defaultColor;
+        }
+
+        return defaultColor;
+    }
+
+    public static RogueLikeEntity CreatePlayer(Point pos)
+    {
+        RogueLikeEntity player = CreateEntity( "player", pos);
+
+        // Motion control
+        var motionControl = new CustomKeybindingsComponent();
+        motionControl.SetMotions(KeybindingsComponent.ArrowMotions);
+        motionControl.SetMotions(KeybindingsComponent.NumPadAllMotions);
+        player.AllComponents.Add(motionControl);
+
+        // FOV controller
+        player.AllComponents.Add(new PlayerFOVController());
+
+        // Reveal all tiles component (F3 key)
+        player.AllComponents.Add(new RevealAllTilesComponent());
+
+        // GeneScanner
+        player.AllComponents.Add(new GeneScanner());
         
+        return player;
+    }
+    
     private static void CreateEntityFactory()
     {
         EntityFactory = new AdvancedFactory<string, Point, RogueLikeEntity>();
@@ -46,46 +106,79 @@ internal static class MapObjectFactory
         // Load entities from JSON data
         foreach (var entityKey in GameData.Entities.Keys)
         {
-            var entityData = GameData.GetEntityData(entityKey);
-                
             EntityFactory.Add(new LambdaAdvancedFactoryBlueprint<string, Point, RogueLikeEntity>(
                 entityKey,
                 pos =>
                 {
-                    var entity = new RogueLikeEntity(
-                        new Color(entityData["color"]?.Value<uint>() ?? 0xFFFFFF),
-                        Color.Black,
-                        entityData["glyph"]?.Value<int>() ?? 2306,
-                        false,
-                        layer: (int)GameMap.Layer.Monsters
-                    )
-                    {
-                        Position = pos,
-                        Name = entityData["name"]?.Value<string>() ?? entityKey
-                    };
+                    RogueLikeEntity entity = CreateEntity(entityKey, pos);
 
-                    // Add AI component if specified
-                    if (entityData["hasAI"]?.Value<bool>() ?? false)
-                    {
-                        entity.AllComponents.Add(new DemoEnemyAI());
-                    }
-
-                    // Add Actor component
-                    entity.AllComponents.Add(new Actor());
-
-                    // Add Health component
-                    int maxHP = entityData["maxHP"]?.Value<int>() ?? 100;
-                    entity.AllComponents.Add(new Health(maxHP));
-
-                    // Add CombatStats component
-                    int attack = entityData["attack"]?.Value<int>() ?? 10;
-                    int defense = entityData["defense"]?.Value<int>() ?? 5;
-                    entity.AllComponents.Add(new Stats(attack, defense));
+                    entity.AllComponents.Add(new DemoEnemyAI());
 
                     return entity;
                 }
             ));
         }
+    }
+
+    private static RogueLikeEntity CreateEntity(string entityKey, Point pos)
+    {
+        JObject entityData = GameData.GetEntityData(entityKey);
+
+        Color foreground = ParseColor(entityData["foreground"], Color.White);
+        Color background = ParseColor(entityData["background"], Color.Black);
+        int glyph = entityData["glyph"]?.Value<int>() ?? 2306;
+        bool isWalkable = entityData["walkable"]?.Value<bool>() ?? false;
+        bool isTransparent = entityData["transparent"]?.Value<bool>() ?? true;
+        string name = entityData["name"]?.Value<string>() ?? entityKey;
+        
+        RogueLikeEntity entity = new RogueLikeEntity(
+            foreground,
+            background,
+            glyph,
+            isWalkable,
+            isTransparent,
+            layer: (int)GameMap.Layer.Monsters
+        )
+        {
+            Position = pos,
+            Name = name
+        };
+        
+        if (entityData.TryGetValue("genome", out JToken? genomeData) && genomeData is JObject genomeObj)
+        {
+            Genome genome = new Genome();
+
+            // Load gene values from JSON
+            foreach (JProperty geneProp in genomeObj.Properties())
+            {
+                genome.SetGene(geneProp.Name, geneProp.Value.Value<int>());
+            }
+
+            entity.AllComponents.Add(genome);
+        }
+        
+        // Actor component (enables turn-based actions)
+        entity.AllComponents.Add(new Actor(0));
+
+        // Add Health component
+        if (entityData.TryGetValue("health", out JToken? healthData))
+        {
+            int maxHP = healthData["maxHP"]?.Value<int>() ?? 1;
+            Health health = new Health(maxHP);
+            float regen = healthData["regenHP"]?.Value<float>() ?? 0f;
+            health.SetHealthRegen(regen);
+            entity.AllComponents.Add(health);
+        }
+
+        // Add CombatStats component
+        if (entityData.ContainsKey("attack") || entityData.ContainsKey("defense"))
+        {
+            int attack = entityData["attack"]?.Value<int>() ?? 1;
+            int defense = entityData["defense"]?.Value<int>() ?? 0;
+            entity.AllComponents.Add(new Stats(attack, defense));
+        }
+
+        return entity;
     }
 
     private static void CreateTerrainFactory()
@@ -95,7 +188,7 @@ internal static class MapObjectFactory
         // Load terrain from JSON data
         foreach (var terrainKey in GameData.Terrain.Keys)
         {
-            var terrainData = GameData.GetTerrainData(terrainKey);
+            JObject terrainData = GameData.GetTerrainData(terrainKey);
                 
             TerrainFactory.Add(new LambdaAdvancedFactoryBlueprint<string, Point, RogueLikeCell>(
                 terrainKey,
@@ -114,7 +207,7 @@ internal static class MapObjectFactory
 
                     var cell = new MemoryAwareRogueLikeCell(
                         pos,
-                        new Color(terrainData["color"]?.Value<uint>() ?? uint.MaxValue),
+                        ParseColor(terrainData["color"], Color.White),
                         Color.Black,
                         glyph,
                         (int)GameMap.Layer.Terrain,

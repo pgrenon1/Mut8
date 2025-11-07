@@ -20,7 +20,7 @@ internal class DemoEnemyAI : RogueLikeComponentBase<RogueLikeEntity>
         if (Parent?.CurrentMap == null) return new WaitAction(Parent);
         if (!Parent.CurrentMap.PlayerFOV.CurrentFOV.Contains(Parent.Position)) return new WaitAction(Parent);
 
-        Player? player = Engine.MainGame!.Player;
+        RogueLikeEntity? player = Engine.MainGame!.Player;
         if (player == null) return new WaitAction(Parent);
 
         var path = Parent.CurrentMap.AStar.ShortestPath(Parent.Position, player.Position);

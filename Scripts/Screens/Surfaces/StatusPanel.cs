@@ -1,14 +1,15 @@
-﻿using Mut8.Scripts.MapObjects;
-using Mut8.Scripts.MapObjects.Components;
+﻿using Mut8.Scripts.MapObjects.Components;
 using SadConsole.UI;
 using SadConsole.UI.Controls;
+using SadRogue.Integration;
 
 namespace Mut8.Scripts.Screens.Surfaces;
 
 internal class StatusPanel : ControlsConsole
 {
     public ProgressBar? HPBar;
-    private Player Player;
+    
+    private RogueLikeEntity _player;
     private readonly Dictionary<Gene, Label> _geneLabels = new();
 
     public StatusPanel(int width, int height) : base(width, height)
@@ -17,9 +18,9 @@ internal class StatusPanel : ControlsConsole
         CreateGeneLabels();
     }
 
-    public void SetPlayer(Player player)
+    public void SetPlayer(RogueLikeEntity player)
     {
-        Player = player;
+        _player = player;
 
         Engine.MainGame!.Player.AllComponents.GetFirst<Health>().HPChanged += OnPlayerHPChanged;
         UpdateHPBar();

@@ -2,6 +2,7 @@ using GoRogue.GameFramework;
 using Mut8.Scripts.MapObjects;
 using Mut8.Scripts.MapObjects.Components;
 using Mut8.Scripts.Maps;
+using Mut8.Scripts.Utils;
 using SadRogue.Integration;
 
 namespace Mut8.Scripts.Actions;
@@ -45,7 +46,7 @@ internal class MoveAction : ActorAction
             var moveCost = BaseMoveCost;
                 
             // If this is the player, immediately center the camera on them
-            if (Entity is Player)
+            if (Entity.IsPlayer())
             {
                 var gameMap = Entity.CurrentMap as GameMap;
                 if (gameMap == null)

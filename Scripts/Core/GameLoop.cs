@@ -1,5 +1,6 @@
 ﻿using Mut8.Scripts.MapObjects;
 using Mut8.Scripts.MapObjects.Components;
+using Mut8.Scripts.Utils;
 
 namespace Mut8.Scripts.Core;
 
@@ -93,7 +94,7 @@ internal class GameLoop
             _actorQueue.TryPeek(out Actor currentActor, out _);
                 
             // Check if this is a player waiting for input
-            var isPlayer = currentActor.Parent is Player;
+            var isPlayer = currentActor != null && currentActor.Parent.IsPlayer();
                 
             if (isPlayer)
             {

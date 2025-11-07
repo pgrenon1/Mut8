@@ -1,5 +1,7 @@
 using GoRogue.GameFramework;
 using Mut8.Scripts.Core;
+using Mut8.Scripts.Utils;
+using SadConsole.Entities;
 using SadRogue.Integration.Components;
 
 namespace Mut8.Scripts.MapObjects.Components;
@@ -98,7 +100,7 @@ internal class Genome : RogueLikeComponentBase<IGameObject>
             
         TriggerGeneChangedCallback(gene, oldValue, value);
             
-        if (Parent is Player)
+        if ((Parent as Entity).IsPlayer())
             Engine.MainGame?.MessagePanel?.AddMessage($"Gene {gene} changed from {oldValue:F2} to {value:F2}.");
     }
 

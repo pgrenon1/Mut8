@@ -4,6 +4,7 @@ using Mut8.Scripts.MapObjects;
 using Mut8.Scripts.MapObjects.Components;
 using Mut8.Scripts.Maps;
 using Mut8.Scripts.Screens.Surfaces;
+using SadRogue.Integration;
 using ShaiRandom.Generators;
 
 namespace Mut8.Scripts.Screens;
@@ -12,7 +13,7 @@ internal class MainGame : ScreenObject
 {
     public GameMap? Map;
     public MessageLogPanel? MessagePanel;
-    public Player? Player;
+    public RogueLikeEntity? Player;
     public StatusPanel? StatusPanel;
     public GameLoop GameLoop;
 
@@ -80,15 +81,18 @@ internal class MainGame : ScreenObject
     private void CreatePlayer()
     {
         // Generate player, add to map at a random walkable position, and calculate initial FOV
-        Player = new Player();
-        Player.Position = GlobalRandom.DefaultRNG.RandomPosition(Map!.WalkabilityView, true);
+        Point position = GlobalRandom.DefaultRNG.RandomPosition(Map!.WalkabilityView, true);
+        Player = MapObjectFactory.CreatePlayer(position);
         Map.AddEntity(Player);
+        
         Player.AllComponents.GetFirst<PlayerFOVController>().CalculateFOV();
+        
         var renderer = Map.DefaultRenderer;
         if (renderer != null)
         {
             renderer.Surface.View = renderer.Surface.View.WithCenter(Player.Position);
         }
+        
         PlayerCreated?.Invoke(this, EventArgs.Empty);
     }
 
