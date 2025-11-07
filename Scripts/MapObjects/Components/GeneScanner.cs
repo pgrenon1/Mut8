@@ -6,17 +6,17 @@ using SadRogue.Primitives.GridViews;
 namespace Mut8.Scripts.MapObjects.Components;
 
 /// <summary>
-/// Component that monitors surrounding tiles for Genome components and tracks the highest gene values.
+/// Component that monitors surrounding tiles for Genome components.
 /// </summary>
 internal class GeneScanner : RogueLikeComponentBase<RogueLikeEntity>
 {
-    private readonly Dictionary<Gene, float> _surroundingGenes;
-        
-    public IReadOnlyDictionary<Gene, float> SurroundingGenes => _surroundingGenes;
+    private readonly List<Genome> _surroundingGenomes;
+
+    public IReadOnlyList<Genome> SurroundingGenomes => _surroundingGenomes;
 
     public GeneScanner() : base(false, false, false, false)
     {
-        _surroundingGenes = new Dictionary<Gene, float>();
+        _surroundingGenomes = new List<Genome>();
     }
 
     public override void OnAdded(IScreenObject host)
@@ -26,7 +26,7 @@ internal class GeneScanner : RogueLikeComponentBase<RogueLikeEntity>
         // Register for position changes
         host.PositionChanged += OnPositionChanged;
         // Initial scan
-        UpdateSurroundingGenes();
+        UpdateSurroundingGenomes();
     }
 
     public override void OnRemoved(IScreenObject host)
@@ -39,28 +39,28 @@ internal class GeneScanner : RogueLikeComponentBase<RogueLikeEntity>
 
     private void OnPositionChanged(object? sender, ValueChangedEventArgs<Point> e)
     {
-        UpdateSurroundingGenes();
+        UpdateSurroundingGenomes();
     }
 
     /// <summary>
-    /// Scans the 8 surrounding tiles for Genome components and sums values for top genes.
-    /// If multiple genomes have the same gene as their top gene, those values are added together.
+    /// Scans the 8 surrounding tiles for Genome components.
+    /// Only includes genomes that are not spent and have genes.
     /// </summary>
-    private void UpdateSurroundingGenes()
+    private void UpdateSurroundingGenomes()
     {
         if (Parent?.CurrentMap == null) return;
 
         // Clear previous data
-        _surroundingGenes.Clear();
+        _surroundingGenomes.Clear();
 
         // Check all 8 adjacent positions
         Direction[] adjacentPositions = AdjacencyRule.EightWay.DirectionsOfNeighborsCache;
-            
+
         for (int i = 0; i < adjacentPositions.Length; i++)
         {
             Direction direction = adjacentPositions[i];
             Point checkPos = Parent.Position + direction;
-                
+
             // Skip if position is out of bounds
             if (!Parent.CurrentMap.Contains(checkPos)) continue;
 
@@ -68,60 +68,20 @@ internal class GeneScanner : RogueLikeComponentBase<RogueLikeEntity>
             foreach (IGameObject obj in Parent.CurrentMap.GetObjectsAt(checkPos))
             {
                 Genome? genome = obj.GoRogueComponents.GetFirstOrDefault<Genome>();
-                if (genome == null || genome.Genes.Count == 0) continue;
+                if (genome == null || genome.Genes.Count == 0 || genome.IsSpent) continue;
 
-                // Find the top gene (gene with highest value) in this genome
-                Gene topGene = 0;
-                float topValue = 0f;
-                    
-                foreach (KeyValuePair<Gene, float> genePair in genome.Genes)
-                {
-                    if (genePair.Value > topValue)
-                    {
-                        topGene = genePair.Key;
-                        topValue = genePair.Value;
-                    }
-                }
-
-                // Add the top gene's value to our dictionary (sum if already exists)
-                if (topValue > 0f)
-                {
-                    if (!_surroundingGenes.TryGetValue(topGene, out var existing))
-                    {
-                        _surroundingGenes[topGene] = topValue;
-                    }
-                    else
-                    {
-                        _surroundingGenes[topGene] = existing + topValue;
-                    }
-                }
+                _surroundingGenomes.Add(genome);
             }
         }
-            
-        System.Diagnostics.Debug.WriteLine($"SurroundingGenes: {_surroundingGenes.Count}");
+
+        System.Diagnostics.Debug.WriteLine($"SurroundingGenomes: {_surroundingGenomes.Count}");
     }
 
     /// <summary>
-    /// Manually triggers an update of surrounding genes.
+    /// Manually triggers an update of surrounding genomes.
     /// </summary>
     public void Refresh()
     {
-        UpdateSurroundingGenes();
-    }
-
-    /// <summary>
-    /// Gets the summed value for a specific gene in the surrounding area.
-    /// </summary>
-    public float GetSurroundingGene(Gene gene)
-    {
-        return _surroundingGenes.TryGetValue(gene, out var value) ? value : 0f;
-    }
-
-    /// <summary>
-    /// Checks if a specific gene exists in the surrounding area.
-    /// </summary>
-    public bool HasSurroundingGene(Gene gene)
-    {
-        return _surroundingGenes.ContainsKey(gene);
+        UpdateSurroundingGenomes();
     }
 }

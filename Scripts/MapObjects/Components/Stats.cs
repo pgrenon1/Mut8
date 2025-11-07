@@ -27,21 +27,21 @@ internal class Stats : RogueLikeComponentBase<RogueLikeEntity>
     
     public float GetDefense()
     {
-        float resilientGeneValue = _genome?.GetGene(Gene.Resilient) ?? 0f;
+        float resilientGeneValue = _genome?.GetGeneNormalized(Gene.Resilient) ?? 0f;
         float defenseModifier = 1f + (GameData.ResilientGeneDefenseMultiplier - 1f) * resilientGeneValue;
         return BaseDefense * defenseModifier;
     }
 
     public float GetAttackPower()
     {
-        float strongGeneValue = _genome?.GetGene(Gene.Strong) ?? 0f;
+        float strongGeneValue = _genome?.GetGeneNormalized(Gene.Strong) ?? 0f;
         float attackPowerModifier = 1f + (GameData.StrongGeneAttackMultiplier - 1f) * strongGeneValue;
         return BaseAttackPower + attackPowerModifier;
     }
 
     public float GetSpeedMultiplier()
     {
-        float quickGeneValue = _genome?.GetGene(Gene.Quick) ?? 0f;
+        float quickGeneValue = _genome?.GetGeneNormalized(Gene.Quick) ?? 0f;
         return 1.0f / (1.0f + GameData.QuickGeneSpeedMultiplier * quickGeneValue);
     }
 }

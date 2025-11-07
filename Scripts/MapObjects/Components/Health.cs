@@ -83,7 +83,7 @@ internal class Health : RogueLikeComponentBase<RogueLikeEntity>
         if (_genome == null)
             return;
         
-        float stoutGeneValue = _genome.GetGene(Gene.Stout);
+        float stoutGeneValue = _genome.GetGeneNormalized(Gene.Stout);
         float maxHPMultiplier = 1f + (GameData.StoutGeneHPMultiplier - 1f) * stoutGeneValue;
         float newMaxHP = MathF.Round(BaseMaxHP * maxHPMultiplier);
             
@@ -100,7 +100,7 @@ internal class Health : RogueLikeComponentBase<RogueLikeEntity>
         if (_genome == null)
             return BaseHealthRegen;
         
-        float photosyntheticGeneValue = _genome?.GetGene(Gene.Photosynthetic) ?? 0f;
+        float photosyntheticGeneValue = _genome?.GetGeneNormalized(Gene.Photosynthetic) ?? 0f;
         float healthRegenModifier = 1f + (GameData.PhotosyntheticGeneRegenMultiplier - 1f) * photosyntheticGeneValue;
         return BaseHealthRegen * healthRegenModifier;
     }

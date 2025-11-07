@@ -25,26 +25,20 @@ internal class CustomKeybindingsComponent : KeybindingsComponent<RogueLikeEntity
     public CustomKeybindingsComponent(uint sortOrder = 5) : base(sortOrder)
     {
         SetAction(Keys.OemPeriod, Wait);
-            
+
         SetAction(Keys.Space, Mutate);
-            
+
         SetDebugActions();
     }
 
     private void Mutate()
     {
-        Genome? genome = Parent!.AllComponents.GetFirstOrDefault<Genome>();
-        if (genome == null) 
-            return;
-            
-        GeneScanner? scanner = Parent!.AllComponents.GetFirstOrDefault<GeneScanner>();
-        if (scanner == null)
-            return;
-            
-        if (scanner.SurroundingGenes.Count == 0)
-            return;
-            
-        genome.Mutate(scanner.SurroundingGenes);
+        MutateAction mutateAction = new MutateAction(Parent!);
+        Actor? actor = Parent!.AllComponents.GetFirstOrDefault<Actor>();
+        if (actor != null)
+        {
+            actor.SetNextAction(mutateAction);
+        }
     }
 
     private void Wait()
@@ -62,17 +56,16 @@ internal class CustomKeybindingsComponent : KeybindingsComponent<RogueLikeEntity
         RevealAllTilesComponent? revealComponent = Parent!.AllComponents.GetFirstOrDefault<RevealAllTilesComponent>();
         revealComponent?.RevealAllTiles();
     }
-        
+
     private void SetDebugActions()
     {
         // Bind F1 key to reveal all tiles action
         SetAction(Keys.F1, RevealAllTiles);
-        
+
         SetAction(Keys.Z, DamageSelf);
-        
+
         SetAction(Keys.X, HealSelf);
-        
-            
+
         // Debug keybindings for adding/removing genes
         SetGeneDebugActions();
     }
@@ -80,40 +73,40 @@ internal class CustomKeybindingsComponent : KeybindingsComponent<RogueLikeEntity
     private void HealSelf()
     {
         Health? health = Parent!.AllComponents.GetFirstOrDefault<Health>();
-        if (health == null) 
+        if (health == null)
             return;
-            
+
         health.Heal(10f);
     }
 
     private void DamageSelf()
     {
         Health? health = Parent!.AllComponents.GetFirstOrDefault<Health>();
-        if (health == null) 
+        if (health == null)
             return;
-            
+
         health.TakeDamage(10f);
     }
 
-    private void IncrmentGene(Gene gene)
+    private void IncrementGene(Gene gene)
     {
         var genome = Parent!.AllComponents.GetFirstOrDefault<Genome>();
-        if (genome == null) 
+        if (genome == null)
             return;
-            
-        float currentValue = genome.GetGene(gene, 0f);
+
+        float currentValue = genome.GetGeneNormalized(gene, 0f);
         genome.SetGene(gene, currentValue + 1f);
     }
-        
+
     private void DecrementGene(Gene gene)
     {
         var genome = Parent!.AllComponents.GetFirstOrDefault<Genome>();
-        if (genome == null) 
+        if (genome == null)
             return;
-            
-        float currentValue = genome.GetGene(gene, 0f);
+
+        float currentValue = genome.GetGeneNormalized(gene, 0f);
         float newValue = currentValue - 1f;
-                
+
         if (newValue <= 0f)
         {
             genome.RemoveGene(gene);
@@ -127,16 +120,17 @@ internal class CustomKeybindingsComponent : KeybindingsComponent<RogueLikeEntity
     private void SetGeneDebugActions()
     {
         var geneValues = Enum.GetValues<Gene>();
-        var numberKeys = new[] { Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7, Keys.D8, Keys.D9, Keys.D0 };
-            
+        var numberKeys = new[]
+            { Keys.D1, Keys.D2, Keys.D3, Keys.D4, Keys.D5, Keys.D6, Keys.D7, Keys.D8, Keys.D9, Keys.D0 };
+
         for (int i = 0; i < Math.Min(geneValues.Length, numberKeys.Length); i++)
         {
             var gene = geneValues[i];
             var key = numberKeys[i];
-                
+
             // Number key: increment gene
-            SetAction(key, () => IncrmentGene(gene));
-                
+            SetAction(key, () => IncrementGene(gene));
+
             // Shift + Number key: decrement gene
             SetAction(new InputKey(key, KeyModifiers.Shift), () => DecrementGene(gene));
         }

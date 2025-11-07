@@ -21,19 +21,23 @@ internal class Genome : RogueLikeComponentBase<IGameObject>
 {
     private readonly Dictionary<Gene, float> _genes;
     private readonly Dictionary<Gene, List<Action<float, float>>> _geneCallbacks;
-        
+    private bool _isSpent;
+
     public IReadOnlyDictionary<Gene, float> Genes => _genes;
+    public bool IsSpent => _isSpent;
 
     public Genome() : base(false, false, false, false)
     {
         _genes = new Dictionary<Gene, float>();
         _geneCallbacks = new Dictionary<Gene, List<Action<float, float>>>();
+        _isSpent = false;
     }
 
     public Genome(Dictionary<Gene, float> initialGenes) : base(false, false, false, false)
     {
         _genes = new Dictionary<Gene, float>(initialGenes);
         _geneCallbacks = new Dictionary<Gene, List<Action<float, float>>>();
+        _isSpent = false;
     }
 
     public void RegisterGeneChangedCallback(Gene gene, Action<float, float> callback)
@@ -67,7 +71,7 @@ internal class Genome : RogueLikeComponentBase<IGameObject>
     /// <summary>
     /// Gets the normalized gene value (0.0 to 1.0).
     /// </summary>
-    public float GetGene(Gene gene, float defaultValue = 0f)
+    public float GetGeneNormalized(Gene gene, float defaultValue = 0f)
     {
         float rawValue = GetRawGene(gene, defaultValue);
         return rawValue / GameData.MaxGeneValue;
@@ -96,12 +100,17 @@ internal class Genome : RogueLikeComponentBase<IGameObject>
     public void SetGene(Gene gene, float value)
     {
         float oldValue = _genes.GetValueOrDefault(gene, 0f);
-        _genes[gene] = value;
+        float newValue = MathF.Min(value, GameData.MaxGeneValue);
+
+        if (newValue.IsEqualWithTolerance(oldValue))
+            return;
+        
+        _genes[gene] = newValue;
             
-        TriggerGeneChangedCallback(gene, oldValue, value);
+        TriggerGeneChangedCallback(gene, oldValue, newValue);
             
         if ((Parent as Entity).IsPlayer())
-            Engine.MainGame?.MessagePanel?.AddMessage($"Gene {gene} changed from {oldValue:F2} to {value:F2}.");
+            Engine.MainGame?.MessagePanel?.AddMessage($"Gene {gene} changed from {oldValue:F2} to {newValue:F2}.");
     }
 
     public bool HasGene(Gene gene)
@@ -136,5 +145,34 @@ internal class Genome : RogueLikeComponentBase<IGameObject>
                 SetGene(gene, currentValue + increase);
             }
         }
+    }
+
+    public void MarkAsSpent()
+    {
+        _isSpent = true;
+    }
+
+    /// <summary>
+    /// Gets the gene with the highest value in this genome.
+    /// Returns null if no genes exist.
+    /// </summary>
+    public (Gene gene, float geneValue)? GetHighestGene()
+    {
+        if (_genes.Count == 0)
+            return null;
+
+        Gene topGene = Gene.Strong;
+        float topValue = float.MinValue;
+
+        foreach (KeyValuePair<Gene, float> genePair in _genes)
+        {
+            if (genePair.Value > topValue)
+            {
+                topGene = genePair.Key;
+                topValue = genePair.Value;
+            }
+        }
+
+        return (topGene, topValue);
     }
 }

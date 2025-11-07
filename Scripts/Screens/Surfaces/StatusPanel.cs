@@ -101,14 +101,40 @@ internal class StatusPanel : ControlsConsole
 
     private void UpdateGeneLabels()
     {
-        var genome = Engine.MainGame!.Player.AllComponents.GetFirstOrDefault<Genome>();
-        var geneScanner = Engine.MainGame!.Player.AllComponents.GetFirstOrDefault<GeneScanner>();
+        Genome? genome = Engine.MainGame!.Player.AllComponents.GetFirstOrDefault<Genome>();
+        GeneScanner? geneScanner = Engine.MainGame!.Player.AllComponents.GetFirstOrDefault<GeneScanner>();
         if (genome == null) return;
 
-        foreach (var (gene, label) in _geneLabels)
+        // Calculate surrounding gene values from scanner
+        Dictionary<Gene, float> surroundingGenes = new Dictionary<Gene, float>();
+        if (geneScanner != null)
         {
-            var value = genome.GetRawGene(gene);
-            var surroundingValue = geneScanner?.GetSurroundingGene(gene) ?? 0f;
+            foreach (Genome surroundingGenome in geneScanner.SurroundingGenomes)
+            {
+                (Gene, float)? highestGene = surroundingGenome.GetHighestGene();
+                if (highestGene.HasValue)
+                {
+                    Gene gene = highestGene.Value.Item1;
+                    float value = highestGene.Value.Item2;
+
+                    if (!surroundingGenes.TryGetValue(gene, out float existing))
+                    {
+                        surroundingGenes[gene] = value;
+                    }
+                    else
+                    {
+                        surroundingGenes[gene] = existing + value;
+                    }
+                }
+            }
+        }
+
+        foreach (KeyValuePair<Gene, Label> kvp in _geneLabels)
+        {
+            Gene gene = kvp.Key;
+            Label label = kvp.Value;
+            float value = genome.GetRawGene(gene);
+            float surroundingValue = surroundingGenes.GetValueOrDefault(gene, 0f);
                 
             if (value > 0f)
             {
