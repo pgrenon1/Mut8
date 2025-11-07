@@ -96,7 +96,7 @@ internal class StatusPanel : ControlsConsole
     {
         var health = Engine.MainGame!.Player.AllComponents.GetFirst<Health>();
         HPBar.Progress = health.HP / health.MaxHP;
-        HPBar.DisplayText = $"HP: {health.HP} / {health.MaxHP}";
+        HPBar.DisplayText = $"HP: {health.HP} / {health.MaxHP} (+{health.GetHealthRegen()})";
     }
 
     private void UpdateGeneLabels()
