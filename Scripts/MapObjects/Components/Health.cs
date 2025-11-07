@@ -30,7 +30,7 @@ internal class Health : RogueLikeComponentBase<RogueLikeEntity>
     public event EventHandler? HPChanged;
     public event EventHandler? Died;
 
-    public Health(float baseMaxHP = 100f, float baseHealthRegen = 1f) : base(false, false, false, false)
+    public Health(float baseMaxHP = 100f, float baseHealthRegen = 0f) : base(false, false, false, false)
     {
         BaseMaxHP = baseMaxHP;
         BaseHealthRegen = baseHealthRegen;
@@ -90,9 +90,7 @@ internal class Health : RogueLikeComponentBase<RogueLikeEntity>
         if (newMaxHP.IsEqualWithTolerance(MaxHP))
             return;
 
-        float hpRatio = HP / MaxHP;
-        MaxHP = newMaxHP;
-        HP = MathF.Round(hpRatio * MaxHP);
+        SetMaxHP(newMaxHP);
                 
         HPChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -141,6 +139,13 @@ internal class Health : RogueLikeComponentBase<RogueLikeEntity>
         HP += amount;
     }
 
+    public void SetMaxHP(float newMaxHP)
+    {
+        float hpRatio = HP / MaxHP;
+        MaxHP = newMaxHP;
+        HP = MathF.Round(hpRatio * MaxHP);
+    }
+    
     private void ApplyHealthRegen()
     {
         float healthRegen = GetHealthRegen();
@@ -151,5 +156,10 @@ internal class Health : RogueLikeComponentBase<RogueLikeEntity>
         }
 
         Heal(healthRegen);
+    }
+
+    public void SetHealthRegen(float regen)
+    {
+        BaseHealthRegen = regen;
     }
 }
