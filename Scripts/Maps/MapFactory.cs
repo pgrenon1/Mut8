@@ -1,6 +1,7 @@
 ﻿using GoRogue.MapGeneration;
 using GoRogue.Random;
 using Mut8.Scripts.MapObjects;
+using Mut8.Scripts.Maps.GenerationSteps;
 using SadRogue.Integration.FieldOfView.Memory;
 using SadRogue.Primitives.GridViews;
 using ShaiRandom.Generators;
@@ -30,9 +31,11 @@ internal static class MapFactory
             .ConfigAndGenerateSafe(gen =>
             {
                 gen.AddSteps(DefaultAlgorithms.CellularAutomataGenerationSteps());
+                gen.AddStep(new AddFlowers("WallFloor"));
             });
 
         var generatedMap = generator.Context.GetFirst<ISettableGridView<bool>>("WallFloor");
+        var flowerMap = generator.Context.GetFirst<ISettableGridView<bool>>("Flowers");
 
         // Set the generated map in MapObjectFactory for bitmask calculations
         MapObjectFactory.SetGeneratedMap(generatedMap);
@@ -53,11 +56,13 @@ internal static class MapFactory
         // system.
         map.ApplyTerrainOverlay(generatedMap, (pos, val) => val ? MapObjectFactory.Floor(pos) : MapObjectFactory.Tree(pos));
 
+        map.ApplyTerrainOverlay(flowerMap, (pos, val) => val ? MapObjectFactory.Flower(pos) : null);
+        
         // Generate 5 enemies, placing them in random walkable locations for demo purposes.
         for (int i = 0; i < 5; i++)
         {
             Point position = GlobalRandom.DefaultRNG.RandomPosition(map.WalkabilityView, true);
-            var enemy = MapObjectFactory.EntityFactory!.Create("gnome", position);
+            var enemy = MapObjectFactory.EntityFactory!.Create("goblin", position);
             map.AddEntity(enemy);
         }
 

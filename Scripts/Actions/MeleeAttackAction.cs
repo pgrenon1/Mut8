@@ -38,6 +38,6 @@ internal class MeleeAttackAction : AttackAction
             
         defenderHealth.TakeDamage(damage);
 
-        return ActionResult.Success;
+        return ActionResult.SuccessWithTime(GetCost());
     }
 }

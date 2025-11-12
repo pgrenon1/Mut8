@@ -26,9 +26,9 @@ class TilesheetSplitter:
         # Configuration variables
         self.tile_width = tk.IntVar(value=16)
         self.tile_height = tk.IntVar(value=16)
-        self.margin_x = tk.IntVar(value=1)
-        self.margin_y = tk.IntVar(value=1)
-        self.background_color = tk.StringVar(value="white")
+        self.margin_x = tk.IntVar(value=0)
+        self.margin_y = tk.IntVar(value=0)
+        self.background_color = tk.StringVar(value="black")
         
         # Image data
         self.original_image = None

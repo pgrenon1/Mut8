@@ -22,7 +22,7 @@ internal class Health : RogueLikeComponentBase<RogueLikeEntity>
         {
             if (_hp == value) return;
 
-            _hp = Math.Clamp(value, 0f, MaxHP);
+            _hp = (int)Math.Round(Math.Clamp(value, 0f, MaxHP));
             HPChanged?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -102,7 +102,8 @@ internal class Health : RogueLikeComponentBase<RogueLikeEntity>
         
         float photosyntheticGeneValue = _genome?.GetGeneNormalized(Gene.Photosynthetic) ?? 0f;
         float healthRegenModifier = 1f + (GameData.PhotosyntheticGeneRegenMultiplier - 1f) * photosyntheticGeneValue;
-        return BaseHealthRegen * healthRegenModifier;
+        float healthRegen = photosyntheticGeneValue > 0f ? Math.Max(1, BaseHealthRegen) * healthRegenModifier : BaseHealthRegen * healthRegenModifier;
+        return MathF.Round(healthRegen);
     }
 
     public void TakeDamage(float damage)

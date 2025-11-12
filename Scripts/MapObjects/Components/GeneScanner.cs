@@ -14,6 +14,8 @@ internal class GeneScanner : RogueLikeComponentBase<RogueLikeEntity>
 
     public IReadOnlyList<Genome> SurroundingGenomes => _surroundingGenomes;
 
+    public Action OnGeneScannerUpdated;
+    
     public GeneScanner() : base(false, false, false, false)
     {
         _surroundingGenomes = new List<Genome>();
@@ -48,7 +50,8 @@ internal class GeneScanner : RogueLikeComponentBase<RogueLikeEntity>
     /// </summary>
     private void UpdateSurroundingGenomes()
     {
-        if (Parent?.CurrentMap == null) return;
+        if (Parent?.CurrentMap == null) 
+            return;
 
         // Clear previous data
         _surroundingGenomes.Clear();
@@ -68,13 +71,14 @@ internal class GeneScanner : RogueLikeComponentBase<RogueLikeEntity>
             foreach (IGameObject obj in Parent.CurrentMap.GetObjectsAt(checkPos))
             {
                 Genome? genome = obj.GoRogueComponents.GetFirstOrDefault<Genome>();
-                if (genome == null || genome.Genes.Count == 0 || genome.IsSpent) continue;
+                if (genome == null || genome.Genes.Count == 0 || genome.IsSpent) 
+                    continue;
 
                 _surroundingGenomes.Add(genome);
             }
         }
 
-        System.Diagnostics.Debug.WriteLine($"SurroundingGenomes: {_surroundingGenomes.Count}");
+        OnGeneScannerUpdated?.Invoke();
     }
 
     /// <summary>

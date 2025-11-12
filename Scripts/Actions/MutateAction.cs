@@ -23,40 +23,10 @@ internal class MutateAction : ActorAction
         if (scanner.SurroundingGenomes.Count == 0)
             return ActionResult.Failure;
 
-        // Find the top gene from each surrounding genome and sum them up
-        Dictionary<Gene, float> aggregatedGenes = new Dictionary<Gene, float>();
-
-        foreach (Genome surroundingGenome in scanner.SurroundingGenomes)
-        {
-            // Find the top gene in this genome
-            (Gene gene, float geneValue)? topGeneTuple = surroundingGenome.GetHighestGene();
-            if (topGeneTuple == null)
-                continue;
-            
-            Gene topGene = topGeneTuple.Value.gene;
-            float topValue = topGeneTuple.Value.geneValue;
-
-            // Add to aggregated genes
-            if (topValue > 0f)
-            {
-                if (!aggregatedGenes.TryGetValue(topGene, out var existing))
-                {
-                    aggregatedGenes[topGene] = topValue;
-                }
-                else
-                {
-                    aggregatedGenes[topGene] = existing + topValue;
-                }
-            }
-
-            // Mark the source genome as spent
-            surroundingGenome.MarkAsSpent();
-        }
-
         // Perform the mutation with the aggregated genes
-        genome.Mutate(aggregatedGenes);
+        genome.Mutate(scanner.SurroundingGenomes);
 
-        return ActionResult.Success;
+        return ActionResult.SuccessWithTime(GetCost());
     }
 
     private RogueLikeEntity Parent => Entity;

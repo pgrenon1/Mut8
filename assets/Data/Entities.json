@@ -17,7 +17,7 @@
       "health": {
         "maxHP": 5
       },
-      "attack": 0,
+      "attack": 1,
       "defense": 0
     },
     "orc": {
@@ -36,6 +36,9 @@
       "foreground": "Red",
       "health": {
         "maxHP": 30
+      },
+      "genome": {
+        "quick": 10
       },
       "attack": 8,
       "defense": 0
@@ -79,6 +82,16 @@
       "blocking": true,
       "transparent": true,
       "sprite": "water_sprite"
+    },
+    "flower": {
+      "name": "Flower",
+      "blocking": false,
+      "transparent": true,
+      "glyph": 541,
+      "randomGlyphs": [541, 542, 543, 544],
+      "genome": {
+        "photosynthetic": 1
+      }
     }
   }
 }

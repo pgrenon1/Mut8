@@ -1,4 +1,5 @@
 using Mut8.Scripts.Actions;
+using Mut8.Scripts.Core;
 using SadRogue.Integration;
 using SadRogue.Integration.Components;
 
@@ -83,8 +84,17 @@ internal class Actor : RogueLikeComponentBase<RogueLikeEntity>
         return null;
     }
         
-    public virtual void ClearNextAction()
+    public void ClearNextAction()
     {
         _nextAction = null;
+    }
+
+    public float GetActionCostMultiplier()
+    {
+        // Modify the cost based on the Quick gene
+        Genome genome = Parent.AllComponents.GetFirstOrDefault<Genome>();
+        float quickGeneValue = genome.GetGeneNormalized(Gene.Quick);
+        float speedMultiplier = 1f + (GameData.QuickGeneSpeedMultiplier - 1f) * quickGeneValue;
+        return 1f / speedMultiplier;
     }
 }

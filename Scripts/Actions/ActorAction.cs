@@ -10,6 +10,7 @@ internal abstract class ActorAction : IAction
 {
     public RogueLikeEntity Entity { get; }
     public Actor? ActorComponent { get; }
+    public int TimeCost { get; } = 100;
 
     protected ActorAction(RogueLikeEntity entity)
     {
@@ -18,4 +19,9 @@ internal abstract class ActorAction : IAction
     }
 
     public abstract ActionResult Perform();
+
+    public int GetCost()
+    {
+        return (int)Math.Round(TimeCost * ActorComponent.GetActionCostMultiplier());
+    }
 }

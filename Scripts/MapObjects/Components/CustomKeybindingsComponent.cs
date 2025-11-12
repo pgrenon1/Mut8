@@ -76,7 +76,7 @@ internal class CustomKeybindingsComponent : KeybindingsComponent<RogueLikeEntity
         if (health == null)
             return;
 
-        health.Heal(10f);
+        health.Heal(10);
     }
 
     private void DamageSelf()
@@ -85,7 +85,7 @@ internal class CustomKeybindingsComponent : KeybindingsComponent<RogueLikeEntity
         if (health == null)
             return;
 
-        health.TakeDamage(10f);
+        health.TakeDamage(10);
     }
 
     private void IncrementGene(Gene gene)

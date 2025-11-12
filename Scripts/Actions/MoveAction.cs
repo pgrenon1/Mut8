@@ -14,11 +14,6 @@ internal class MoveAction : ActorAction
 {
     private readonly Direction _direction;
 
-    /// <summary>
-    /// Base time cost for moving one tile.
-    /// </summary>
-    public int BaseMoveCost = 100;
-
     public MoveAction(RogueLikeEntity entity, Direction direction)
         : base(entity)
     {
@@ -43,8 +38,6 @@ internal class MoveAction : ActorAction
             // Perform the move
             Entity.Position = newPosition;
 
-            var moveCost = BaseMoveCost;
-                
             // If this is the player, immediately center the camera on them
             if (Entity.IsPlayer())
             {
@@ -61,7 +54,7 @@ internal class MoveAction : ActorAction
 
             Engine.MainGame?.MessagePanel?.AddMessage($"{Entity.Name} moves {_direction.ToString().ToLower()}.");
 
-            return ActionResult.SuccessWithTime(moveCost);
+            return ActionResult.SuccessWithTime(GetCost());
         }
         else
         {

@@ -4,6 +4,7 @@ using SadRogue.Integration;
 using SadRogue.Integration.FieldOfView.Memory;
 using GoRogue.Factories;
 using GoRogue.GameFramework;
+using GoRogue.Random;
 using Mut8.Scripts.Core;
 using SadRogue.Primitives.GridViews;
 using Newtonsoft.Json.Linq;
@@ -39,7 +40,8 @@ internal static class MapObjectFactory
     internal static IGameObject Floor(Point pos) => TerrainFactory!.Create("floor", pos);
     internal static IGameObject Wall(Point pos) => TerrainFactory!.Create("wall", pos);
     internal static IGameObject Tree(Point pos) => TerrainFactory!.Create("tree", pos);
-
+    internal static IGameObject Flower(Point pos) => TerrainFactory!.Create("flower", pos);
+    
     /// <summary>
     /// Parses a color from JSON token - supports both uint (hex) and string (color names)
     /// </summary>
@@ -70,8 +72,6 @@ internal static class MapObjectFactory
             {
                 return (Color)(field.GetValue(null) ?? defaultColor);
             }
-
-            return defaultColor;
         }
 
         return defaultColor;
@@ -126,7 +126,7 @@ internal static class MapObjectFactory
 
         Color foreground = ParseColor(entityData["foreground"], Color.White);
         Color background = ParseColor(entityData["background"], Color.Black);
-        int glyph = entityData["glyph"]?.Value<int>() ?? 2306;
+        int glyph = GetGlyph(entityData);
         bool isWalkable = entityData["walkable"]?.Value<bool>() ?? false;
         bool isTransparent = entityData["transparent"]?.Value<bool>() ?? true;
         string name = entityData["name"]?.Value<string>() ?? entityKey;
@@ -144,18 +144,7 @@ internal static class MapObjectFactory
             Name = name
         };
         
-        if (entityData.TryGetValue("genome", out JToken? genomeData) && genomeData is JObject genomeObj)
-        {
-            Genome genome = new Genome();
-
-            // Load gene values from JSON
-            foreach (JProperty geneProp in genomeObj.Properties())
-            {
-                genome.SetGene(geneProp.Name, geneProp.Value.Value<int>());
-            }
-
-            entity.AllComponents.Add(genome);
-        }
+        SetupGenomeComponentOnGameObject(entity, entityData);
         
         // Actor component (enables turn-based actions)
         entity.AllComponents.Add(new Actor(0));
@@ -181,6 +170,35 @@ internal static class MapObjectFactory
         return entity;
     }
 
+    private static int GetGlyph(JObject data)
+    {
+        int glyph = data["glyph"]?.Value<int>() ?? 2306;
+
+        if (data.TryGetValue("randomGlyphs", out JToken? randomGlyphs) && randomGlyphs is JArray glyphArray)
+        {
+            int randomIndex = GlobalRandom.DefaultRNG.NextInt(glyphArray.Count - 1);
+            glyph = glyphArray[randomIndex].Value<int>();
+        }
+
+        return glyph;
+    }
+
+    private static void SetupGenomeComponentOnGameObject(IGameObject gameObject, JObject data)
+    {
+        if (data.TryGetValue("genome", out JToken? genomeData) && genomeData is JObject genomeObj)
+        {
+            Genome genome = new Genome();
+
+            // Load gene values from JSON
+            foreach (JProperty geneProp in genomeObj.Properties())
+            {
+                genome.SetGene(geneProp.Name, geneProp.Value.Value<int>());
+            }
+
+            gameObject.GoRogueComponents.Add(genome);
+        }
+    }
+
     private static void CreateTerrainFactory()
     {
         TerrainFactory = new AdvancedFactory<string, Point, RogueLikeCell>();
@@ -196,7 +214,7 @@ internal static class MapObjectFactory
                 {
                     bool isWalkable = !(terrainData["blocking"]?.Value<bool>() ?? false);
                     bool isTransparent = terrainData["transparent"]?.Value<bool>() ?? isWalkable;
-                    int glyph = terrainData["glyph"]?.Value<int>() ?? 2782;
+                    int glyph = GetGlyph(terrainData);
                         
                     // Check if this terrain type uses bitmask sprites
                     var bitmaskSprites = terrainData["bitmaskSprites"]?.ToObject<int[]>();
@@ -215,20 +233,7 @@ internal static class MapObjectFactory
                         transparent: isTransparent
                     );
 
-                    // Add Genome component if genome property exists
-                    JToken? genomeData = terrainData["genome"];
-                    if (genomeData != null && genomeData is JObject genomeObj)
-                    {
-                        Genome genome = new Genome();
-                            
-                        // Load gene values from JSON
-                        foreach (JProperty geneProp in genomeObj.Properties())
-                        {
-                            genome.SetGene(geneProp.Name, geneProp.Value.Value<int>());
-                        }
-                            
-                        cell.GoRogueComponents.Add(genome);
-                    }
+                    SetupGenomeComponentOnGameObject(cell, terrainData);
 
                     return cell;
                 }

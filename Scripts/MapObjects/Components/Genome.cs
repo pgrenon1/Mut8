@@ -3,6 +3,7 @@ using Mut8.Scripts.Core;
 using Mut8.Scripts.Utils;
 using SadConsole.Entities;
 using SadRogue.Integration.Components;
+using SadRogue.Integration.FieldOfView.Memory;
 
 namespace Mut8.Scripts.MapObjects.Components;
 
@@ -26,6 +27,9 @@ internal class Genome : RogueLikeComponentBase<IGameObject>
     public IReadOnlyDictionary<Gene, float> Genes => _genes;
     public bool IsSpent => _isSpent;
 
+    private static readonly CellDecorator SpentDecorator = new CellDecorator(new Color(Color.Red, 0.5f), 2548, Mirror.None);
+    private static readonly List<CellDecorator> SpentDecoratorList = [SpentDecorator];
+
     public Genome() : base(false, false, false, false)
     {
         _genes = new Dictionary<Gene, float>();
@@ -46,6 +50,7 @@ internal class Genome : RogueLikeComponentBase<IGameObject>
         {
             _geneCallbacks[gene] = new List<Action<float, float>>();
         }
+
         _geneCallbacks[gene].Add(callback);
     }
 
@@ -73,14 +78,14 @@ internal class Genome : RogueLikeComponentBase<IGameObject>
     /// </summary>
     public float GetGeneNormalized(Gene gene, float defaultValue = 0f)
     {
-        float rawValue = GetRawGene(gene, defaultValue);
+        float rawValue = GetGeneRaw(gene, defaultValue);
         return rawValue / GameData.MaxGeneValue;
     }
 
     /// <summary>
     /// Gets the raw (unnormalized) gene value.
     /// </summary>
-    public float GetRawGene(Gene gene, float defaultValue = 0f)
+    public float GetGeneRaw(Gene gene, float defaultValue = 0f)
     {
         return _genes.GetValueOrDefault(gene, defaultValue);
     }
@@ -94,6 +99,7 @@ internal class Genome : RogueLikeComponentBase<IGameObject>
         {
             throw new ArgumentException($"Unknown gene name: {geneName}");
         }
+
         SetGene(gene, value);
     }
 
@@ -104,11 +110,11 @@ internal class Genome : RogueLikeComponentBase<IGameObject>
 
         if (newValue.IsEqualWithTolerance(oldValue))
             return;
-        
+
         _genes[gene] = newValue;
-            
+
         TriggerGeneChangedCallback(gene, oldValue, newValue);
-            
+
         if ((Parent as Entity).IsPlayer())
             Engine.MainGame?.MessagePanel?.AddMessage($"Gene {gene} changed from {oldValue:F2} to {newValue:F2}.");
     }
@@ -131,13 +137,43 @@ internal class Genome : RogueLikeComponentBase<IGameObject>
         return new Genome(new Dictionary<Gene, float>(_genes));
     }
 
-    public void Mutate(IReadOnlyDictionary<Gene, float> scannerSurroundingGenes)
+    public void Mutate(IReadOnlyList<Genome> sourceGenomes)
     {
-        foreach (Gene gene in scannerSurroundingGenes.Keys)
+        // Get the genes that are in the source genomes
+        Dictionary<Gene, float> genes = new Dictionary<Gene, float>();
+
+        foreach (Genome sourceGenome in sourceGenomes)
         {
-            float currentValue = GetRawGene(gene);
-            float surroundingValue = scannerSurroundingGenes[gene];
-                
+            // Find the top gene in this genome
+            (Gene gene, float geneValue)? topGeneTuple = sourceGenome.GetHighestGene();
+            if (topGeneTuple == null)
+                continue;
+
+            Gene topGene = topGeneTuple.Value.gene;
+            float topValue = topGeneTuple.Value.geneValue;
+
+            // Add to aggregated genes
+            if (topValue > 0f)
+            {
+                if (!genes.TryGetValue(topGene, out var existing))
+                {
+                    genes[topGene] = topValue;
+                }
+                else
+                {
+                    genes[topGene] = existing + topValue;
+                }
+
+                sourceGenome.MarkAsSpent();
+            }
+        }
+
+        // Apply the aggregated genes to this genome
+        foreach (Gene gene in genes.Keys)
+        {
+            float currentValue = GetGeneRaw(gene);
+            float surroundingValue = genes[gene];
+
             // Increase the gene value based on surrounding value,
             if (surroundingValue > 0f)
             {
@@ -145,11 +181,47 @@ internal class Genome : RogueLikeComponentBase<IGameObject>
                 SetGene(gene, currentValue + increase);
             }
         }
+
+        // Update the gene scanner if any exists on this parent
+        GeneScanner? geneScanner = Parent?.GoRogueComponents.GetFirstOrDefault<GeneScanner>();
+        if (geneScanner != null)
+        {
+            geneScanner.Refresh();
+        }
+
+        // Decay the genes that are not affected by the mutation
+        foreach (Gene gene in _genes.Keys)
+        {
+            if (genes.ContainsKey(gene))
+                continue;
+            
+            float baseDecayRate = GameData.GeneDecayRate;
+            float currentValue = GetGeneRaw(gene);
+            float ratio = currentValue / GameData.MaxGeneValue;
+            // Decay the gene. The higher the value, the more it will decay
+            float newValue = MathF.Max(0f, currentValue - baseDecayRate * ratio);
+
+            SetGene(gene, newValue);
+        }
     }
 
     public void MarkAsSpent()
     {
         _isSpent = true;
+
+        switch (Parent)
+        {
+            case Entity entity:
+            {
+                entity.AppearanceSingle!.Appearance.Decorators = SpentDecoratorList;
+                break;
+            }
+            case MemoryAwareRogueLikeCell cell:
+            {
+                cell.TrueAppearance.Decorators = SpentDecoratorList;
+                break;
+            }
+        }
     }
 
     /// <summary>

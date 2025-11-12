@@ -15,10 +15,11 @@ internal static class GameData
     public static float PlayerBaseDefense { get; private set; } = 5f;
 
     public static float MaxGeneValue { get; private set; } = 100f;
+    public static float GeneDecayRate { get; private set; } = 20f;
     public static float StoutGeneHPMultiplier { get; private set; } = 4f;
     public static float StrongGeneAttackMultiplier { get; private set; } = 5f;
     public static float ResilientGeneDefenseMultiplier { get; private set; } = 3f;
-    public static float QuickGeneSpeedMultiplier { get; private set; } = 2f;
+    public static float QuickGeneSpeedMultiplier { get; private set; } = 3f;
     public static float SmartGeneXPMultiplier { get; private set; } = 1f;
     public static float StealthyGeneDetectionMultiplier { get; private set; } = 1f;
     public static float PhotosyntheticGeneRegenMultiplier { get; private set; } = 5f;

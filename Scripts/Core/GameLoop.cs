@@ -1,4 +1,5 @@
-﻿using Mut8.Scripts.MapObjects;
+﻿using Mut8.Scripts.Actions;
+using Mut8.Scripts.MapObjects;
 using Mut8.Scripts.MapObjects.Components;
 using Mut8.Scripts.Utils;
 
@@ -30,10 +31,11 @@ namespace Mut8.Scripts.Core;
 /// </summary>
 internal class GameLoop
 {
-    private PriorityQueue<Actor, (int time, long insertionOrder)> _actorQueue = new();
-    private long _insertionCounter = 0;
+    private PriorityQueue<Actor, (int time, int insertionOrder)> _actorQueue = new();
+    private int _insertionCounter = 0;
     private readonly TurnEventActor _turnEventActor;
-
+    private bool _isPlayerTurn = false;
+    
     public GameLoop()
     {
         _turnEventActor = new TurnEventActor(100);
@@ -92,18 +94,31 @@ internal class GameLoop
                 
             // Peek at the next actor without removing them
             _actorQueue.TryPeek(out Actor currentActor, out _);
+            
+            // Check if this actor is the player's turn
+            bool previousIsPlayer = _isPlayerTurn;
+            _isPlayerTurn = currentActor != null && currentActor.Parent.IsPlayer();
+
+            // If this is the player's turn, 
+            if (!previousIsPlayer && _isPlayerTurn)
+            {
+                _isPlayerTurn = true;
+                OnPlayerTurnStart(currentActor);
+            }
                 
             // Check if this is a player waiting for input
-            var isPlayer = currentActor != null && currentActor.Parent.IsPlayer();
-                
-            if (isPlayer)
+            if (_isPlayerTurn)
             {
-                var action = currentActor.GetAction();
+                IAction? action = currentActor.GetAction();
                 if (action == null)
                 {
                     // Player has no action ready, stop processing without dequeuing
                     break;
                 }
+            }
+            else
+            {
+                _isPlayerTurn = false;
             }
                 
             // Now actually dequeue since we know we can process this actor
@@ -115,6 +130,11 @@ internal class GameLoop
             // Actor has taken their action, put them back in the queue with updated time
             _actorQueue.Enqueue(currentActor, (currentActor.Time, _insertionCounter++));
         }
+    }
+
+    private void OnPlayerTurnStart(Actor playerActor)
+    {
+        playerActor.Parent!.AllComponents.GetFirstOrDefault<GeneScanner>()?.Refresh();
     }
 
     /// <summary>
