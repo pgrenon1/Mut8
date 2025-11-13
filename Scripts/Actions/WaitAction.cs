@@ -10,6 +10,8 @@ internal class WaitAction : ActorAction
 
     public override ActionResult Perform()
     {
+        Engine.MainGame?.MessagePanel?.AddMessage(Entity, $"{Entity.Name} waits. [{GetCost()}]");
+        
         return ActionResult.SuccessWithTime(GetCost());
     }
 }

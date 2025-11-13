@@ -17,13 +17,13 @@ internal class MeleeAttackAction : AttackAction
 
         if (attackerStats == null)
         {
-            Engine.MainGame?.MessagePanel?.AddMessage($"{Entity.Name} has no combat stats!");
+            Engine.MainGame?.MessagePanel?.AddMessage(Entity, $"{Entity.Name} has no combat stats!");
             return ActionResult.Failure;
         }
 
         if (defenderHealth == null)
         {
-            Engine.MainGame?.MessagePanel?.AddMessage($"{TargetEntity.Name} cannot be attacked!");
+            Engine.MainGame?.MessagePanel?.AddMessage(Entity, $"{TargetEntity.Name} cannot be attacked!");
             return ActionResult.Failure;
         }
 
@@ -33,8 +33,8 @@ internal class MeleeAttackAction : AttackAction
         float damage = rawDamage;
 
         // Log the attack
-        string attackMessage = $"{Entity.Name} attacks {TargetEntity.Name} for {damage:F1} damage!";
-        Engine.MainGame?.MessagePanel?.AddMessage(attackMessage);
+        string attackMessage = $"{Entity.Name} attacks {TargetEntity.Name} for {damage:F1} damage! [{GetCost()}]";
+        Engine.MainGame?.MessagePanel?.AddMessage(Entity, attackMessage);
             
         defenderHealth.TakeDamage(damage);
 

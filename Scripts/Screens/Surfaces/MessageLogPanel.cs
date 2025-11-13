@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using SadConsole.Entities;
 
 namespace Mut8.Scripts.Screens.Surfaces;
 
@@ -35,8 +36,11 @@ public class MessageLogPanel : Console
         _lastMessage = "";
     }
 
-    public void AddMessage(string message)
+    public void AddMessage(Entity? instigator, string message)
     {
+        if (instigator != null && !instigator.IsVisible)
+            return;
+        
         if (_lastMessage == message)
             _lastMessageCount++;
         else
@@ -45,13 +49,15 @@ public class MessageLogPanel : Console
             _lastMessage = message;
         }
 
+        string currentMessage = $"{DateTime.Now.ToString("HH:mm:ss:ffff")} : {_lastMessage}";
+        
         if (_lastMessageCount > 1)
         {
             Cursor.Position = Cursor.Position.Translate(0, -1);
-            Cursor.Print($"{DateTime.Now.ToString("HH:mm:ss:ffff")} : {_lastMessage} (x{_lastMessageCount})");
+            Cursor.Print($"{currentMessage} (x{_lastMessageCount})");
         }
         else
-            Cursor.Print(_lastMessage);
+            Cursor.Print(currentMessage);
 
         Cursor.NewLine();
     }

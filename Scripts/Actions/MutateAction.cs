@@ -24,8 +24,14 @@ internal class MutateAction : ActorAction
             return ActionResult.Failure;
 
         // Perform the mutation with the aggregated genes
-        genome.Mutate(scanner.SurroundingGenomes);
+        Dictionary<Gene, float> geneDeltas = genome.Mutate(scanner.SurroundingGenomes);
 
+        // Transform the genes delta into a string to display in the message panel
+        
+        string geneDeltasString = string.Join(", ", geneDeltas.Select(kv => $"{kv.Key}: {kv.Value}"));
+        
+        Engine.MainGame.MessagePanel?.AddMessage(Parent, $"{Parent.Name} mutated! {geneDeltasString} [{GetCost()}]");
+        
         return ActionResult.SuccessWithTime(GetCost());
     }
 

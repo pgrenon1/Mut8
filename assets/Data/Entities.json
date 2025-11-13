@@ -55,6 +55,12 @@
         "resilient": 10
       }
     },
+    "stone": {
+      "name": "Stone",
+      "blocking": false,
+      "transparent": false,
+      "glyph": 1034
+    },
     "floor": {
       "name": "Floor",
       "blocking": false,
@@ -64,7 +70,7 @@
     "tree": {
       "name": "Tree",
       "blocking": true,
-      "transparent": true,
+      "transparent": false,
       "glyph": 526,
       "genome": {
         "stout": 5

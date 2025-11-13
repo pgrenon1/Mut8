@@ -1,38 +1,14 @@
-$folderPath = ""
+$folderPath = ".\bin\Release\net8.0-windows\win-x64\publish"
 
-# Vérifie si le chemin existe
+dotnet publish -c Release -r win-x64 -p:PublishReadyToRun=false -p:TieredCompilation=false -p:PublishSingleFile=true --self-contained
+
+# Check if the path exists
 if (-not (Test-Path -Path $folderPath -PathType Container)) {
-    Write-Error "Le chemin spécifié n'existe pas ou n'est pas un dossier."
+    Write-Error "The specified path does not exist or is not a folder."
     exit 1
 }
 
-# Supprime le fichier .zip existant dans le dossier
-Get-ChildItem -Path $folderPath -Filter "*.zip" | Remove-Item -Force -ErrorAction SilentlyContinue
-
-# Récupère tous les fichiers du dossier (sans les sous-dossiers)
-$filesToZip = Get-ChildItem -Path $folderPath -File
-
-# Vérifie s'il y a des fichiers à zipper
-if ($filesToZip.Count -eq 0) {
-    Write-Host "Aucun fichier à zipper dans le dossier spécifié."
-    exit 0
-}
-
-# Chemin du fichier zip de sortie
-$zipFilePath = Join-Path -Path $folderPath -ChildPath "archive.zip"
-
-# Crée le fichier zip
-try {
-    $filePaths = $filesToZip | ForEach-Object { $_.FullName }
-    Compress-Archive -Path $filePaths -DestinationPath $zipFilePath -Force
-    Write-Host "Le fichier $zipFilePath a été créé avec succès."
-}
-catch {
-    Write-Error "Une erreur est survenue lors de la création du fichier zip : $_"
-    exit 1
-}
-
-# Exécute la commande butler push
-$butlerCommand = "butler push `"$zipFilePath`" PhilG/Mut8:"
-Write-Host "Exécution de la commande : $butlerCommand"
+# Execute the butler command to upload to itch
+$butlerCommand = "butler push `"$folderPath`" PhilG/Mut8:win"
+Write-Host "Executing command : $butlerCommand"
 Invoke-Expression $butlerCommand

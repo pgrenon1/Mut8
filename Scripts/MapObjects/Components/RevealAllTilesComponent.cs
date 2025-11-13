@@ -47,6 +47,6 @@ internal class RevealAllTilesComponent : RogueLikeComponentBase<RogueLikeEntity>
         }
 
         // Add a message to inform the player
-        Engine.MainGame?.MessagePanel.AddMessage("All tiles have been revealed!");
+        Engine.MainGame?.MessagePanel.AddMessage(Engine.MainGame.Player, "All tiles have been revealed!");
     }
 }

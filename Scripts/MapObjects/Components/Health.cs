@@ -125,7 +125,7 @@ internal class Health : RogueLikeComponentBase<RogueLikeEntity>
     {
         Died?.Invoke(this, EventArgs.Empty);
 
-        Engine.MainGame?.MessagePanel?.AddMessage($"{Parent!.Name} has died.");
+        Engine.MainGame?.MessagePanel?.AddMessage(Parent, $"{Parent!.Name} has died.");
 
         Parent!.CurrentMap?.RemoveEntity(Parent);
     }

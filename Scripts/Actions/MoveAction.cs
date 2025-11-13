@@ -52,7 +52,7 @@ internal class MoveAction : ActorAction
                 }
             }
 
-            Engine.MainGame?.MessagePanel?.AddMessage($"{Entity.Name} moves {_direction.ToString().ToLower()}.");
+            Engine.MainGame?.MessagePanel?.AddMessage(Entity, $"{Entity.Name} moves {_direction.ToString().ToLower()}. [{GetCost()}]");
 
             return ActionResult.SuccessWithTime(GetCost());
         }

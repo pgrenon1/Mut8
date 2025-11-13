@@ -115,8 +115,9 @@ internal class Genome : RogueLikeComponentBase<IGameObject>
 
         TriggerGeneChangedCallback(gene, oldValue, newValue);
 
-        if ((Parent as Entity).IsPlayer())
-            Engine.MainGame?.MessagePanel?.AddMessage($"Gene {gene} changed from {oldValue:F2} to {newValue:F2}.");
+        Entity? parent = Parent as Entity;
+        if (parent.IsPlayer())
+            Engine.MainGame?.MessagePanel?.AddMessage(parent, $"Gene {gene} changed from {oldValue:F2} to {newValue:F2}.");
     }
 
     public bool HasGene(Gene gene)
@@ -137,8 +138,11 @@ internal class Genome : RogueLikeComponentBase<IGameObject>
         return new Genome(new Dictionary<Gene, float>(_genes));
     }
 
-    public void Mutate(IReadOnlyList<Genome> sourceGenomes)
+    public Dictionary<Gene, float> Mutate(IReadOnlyList<Genome> sourceGenomes)
     {
+        // Keep track of the genes that were affected by the mutation
+        Dictionary<Gene, float> geneDeltas = new Dictionary<Gene, float>();
+        
         // Get the genes that are in the source genomes
         Dictionary<Gene, float> genes = new Dictionary<Gene, float>();
 
@@ -178,7 +182,13 @@ internal class Genome : RogueLikeComponentBase<IGameObject>
             if (surroundingValue > 0f)
             {
                 float increase = surroundingValue;
+                
                 SetGene(gene, currentValue + increase);
+                
+                float newValue = GetGeneRaw(gene);
+                float geneDelta = newValue - currentValue;
+                if (!geneDeltas.TryAdd(gene, geneDelta))
+                    geneDeltas[gene] += geneDelta;
             }
         }
 
@@ -203,6 +213,8 @@ internal class Genome : RogueLikeComponentBase<IGameObject>
 
             SetGene(gene, newValue);
         }
+        
+        return geneDeltas;
     }
 
     public void MarkAsSpent()
