@@ -10,12 +10,10 @@ public class AddFlowers : GenerationStep
     public readonly string? WallFloorComponentTag;
     public readonly string? FlowerComponentTag;
     
-    public IEnhancedRandom RNG = GlobalRandom.DefaultRNG;
-    
-    public AddFlowers(string? wallFloorComponentTag = "WallFloor")
+    public AddFlowers(string? wallFloorComponentTag = "WallFloor", string? flowerComponentTag = "Flowers")
     {
         WallFloorComponentTag = wallFloorComponentTag;
-        FlowerComponentTag = "Flowers";
+        FlowerComponentTag = flowerComponentTag;
     }
     
     protected override IEnumerator<object?> OnPerform(GenerationContext context)
@@ -34,7 +32,7 @@ public class AddFlowers : GenerationStep
                 if (!wallFloorContext[x, y])
                     continue;
                 
-                flowerMap[x, y] = RNG.PercentageCheck(10f);
+                flowerMap[x, y] = GlobalRandom.DefaultRNG.PercentageCheck(10f);
             }
         }
         

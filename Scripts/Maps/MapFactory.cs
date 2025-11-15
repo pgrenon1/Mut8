@@ -32,10 +32,12 @@ internal static class MapFactory
             {
                 gen.AddSteps(DefaultAlgorithms.CellularAutomataGenerationSteps());
                 gen.AddStep(new AddFlowers("WallFloor"));
+                gen.AddStep(new AddStones("WallFloor"));
             });
 
         var generatedMap = generator.Context.GetFirst<ISettableGridView<bool>>("WallFloor");
         var flowerMap = generator.Context.GetFirst<ISettableGridView<bool>>("Flowers");
+        var stoneMap = generator.Context.GetFirst<ISettableGridView<bool>>("Stones");
 
         // Set the generated map in MapObjectFactory for bitmask calculations
         // MapObjectFactory.SetGeneratedMap(generatedMap);
@@ -46,8 +48,9 @@ internal static class MapFactory
         // Translate GoRogue's terrain data into actual integration library objects.  Our terrain must be of type
         // MemoryAwareRogueLikeCells because we are using the integration library's "memory-based" fov visibility
         // system.
-        map.ApplyTerrainOverlay(generatedMap, (pos, val) => val ? MapObjectFactory.Floor(pos) : MapObjectFactory.Wall(pos));
+        map.ApplyTerrainOverlay(generatedMap, (pos, val) => val ? MapObjectFactory.Floor(pos) : MapObjectFactory.Tree(pos));
         map.ApplyTerrainOverlay(flowerMap, (pos, val) => val ? MapObjectFactory.Flower(pos) : null);
+        map.ApplyTerrainOverlay(stoneMap, (pos, val) => val ? MapObjectFactory.Stone(pos) : null);
 
         map.ResolveBitmaskTiles();
         

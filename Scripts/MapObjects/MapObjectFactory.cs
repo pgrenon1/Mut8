@@ -41,6 +41,7 @@ internal static class MapObjectFactory
     internal static IGameObject Wall(Point pos) => TerrainFactory!.Create("wall", pos);
     internal static IGameObject Tree(Point pos) => TerrainFactory!.Create("tree", pos);
     internal static IGameObject Flower(Point pos) => TerrainFactory!.Create("flower", pos);
+    internal static IGameObject Stone(Point pos) => TerrainFactory!.Create("stone", pos);
     
     /// <summary>
     /// Parses a color from JSON token - supports both uint (hex) and string (color names)
