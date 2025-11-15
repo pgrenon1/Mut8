@@ -1,4 +1,8 @@
-﻿using SadRogue.Integration.Maps;
+﻿using GoRogue.GameFramework;
+using GoRogue.MapGeneration;
+using Mut8.Scripts.MapObjects.Components;
+using SadRogue.Integration.Maps;
+using SadRogue.Primitives.GridViews;
 
 namespace Mut8.Scripts.Maps;
 
@@ -17,9 +21,24 @@ internal class GameMap : RogueLikeMap
         Items
     }
 
+    public readonly GenerationContext GenerationContext;
+    
     // CUSTOMIZATION: Change the distance from Distance.Chebyshev to whatever is desired for your game. By default,
     // this will affect the FOV shape as well as the distance calculation used for AStar pathfinding on the Map.
-    public GameMap(int width, int height, DefaultRendererParams? defaultRendererParams)
+    public GameMap(int width, int height, DefaultRendererParams? defaultRendererParams, GenerationContext generationContext)
         : base(width, height, defaultRendererParams, Enum.GetValues<Layer>().Length - 1, Distance.Euclidean)
-    { }
+    {
+        GenerationContext = generationContext;
+    }
+
+    public void ResolveBitmaskTiles()
+    {
+        // loop over the terrain and find BitmaskTile components
+        foreach (Point point in Terrain.Positions())
+        {
+            IGameObject? gameObject = Terrain[point];
+            BitMaskTile? bitMaskTile = gameObject.GoRogueComponents.GetFirstOrDefault<BitMaskTile>();
+            bitMaskTile?.UpdateTileBasedOnNeighbors();
+        }
+    }
 }

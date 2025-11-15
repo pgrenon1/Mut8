@@ -50,7 +50,7 @@
       "blocking": true,
       "transparent": false,
       "glyph": 1034,
-      "bitmaskSprites": [ 920, 863, 919, 862, 921, 864, 750, 975, 977, 807, 976, 1032, 978, 1031, 974, 1034 ],
+      "bitmaskGlyphs": [ 920, 863, 919, 862, 921, 864, 750, 975, 977, 807, 976, 1032, 978, 1031, 974, 1034 ],
       "genome": {
         "resilient": 10
       }
@@ -59,7 +59,10 @@
       "name": "Stone",
       "blocking": false,
       "transparent": false,
-      "glyph": 1034
+      "glyph": 1034,
+      "genome": {
+        "strong": 5
+      }
     },
     "floor": {
       "name": "Floor",

@@ -1,6 +1,8 @@
-﻿using SadRogue.Integration;
+﻿using GoRogue.MapGeneration;
+using SadRogue.Integration;
 using SadRogue.Integration.Components;
 using Mut8.Scripts.Maps;
+using SadRogue.Integration.FieldOfView.Memory;
 
 namespace Mut8.Scripts.MapObjects.Components;
 
@@ -39,11 +41,8 @@ internal class BitMaskTile : RogueLikeComponentBase<RogueLikeCell>
     /// </summary>
     public void UpdateTileBasedOnNeighbors()
     {
-        if (Parent?.CurrentMap is not GameMap map)
-            return;
-
         Point pos = Parent.Position;
-        int bitmask = GetBitmask(pos.X, pos.Y, map);
+        int bitmask = GetBitmask(pos.X, pos.Y);
        
         // Map bitmask to sprite index
         // The bitmask value (0-15) corresponds to which neighbors match
@@ -51,6 +50,11 @@ internal class BitMaskTile : RogueLikeComponentBase<RogueLikeCell>
         if (bitmask >= 0 && bitmask < _spriteIndexArray.Length)
         {
             Parent.Appearance.Glyph = _spriteIndexArray[bitmask];
+            if (Parent is MemoryAwareRogueLikeCell cell)
+            {
+                // PG: I don't know why I need to reverse the array, but it works oupsi!
+                cell.TrueAppearance.Glyph = _spriteIndexArray.Reverse().ToArray()[bitmask];
+            }
         }
     }
 
@@ -59,26 +63,25 @@ internal class BitMaskTile : RogueLikeComponentBase<RogueLikeCell>
     /// </summary>
     /// <param name="x">X position of the tile</param>
     /// <param name="y">Y position of the tile</param>
-    /// <param name="map">The game map</param>
     /// <returns>Bitmask value (0-15) indicating which neighbors match</returns>
-    private int GetBitmask(int x, int y, GameMap map)
+    private int GetBitmask(int x, int y)
     {
         int mask = 0;
 
         // Check Up (bit 0)
-        if (HasMatchingNeighbor(x, y - 1, map))
+        if (HasMatchingNeighbor(x, y - 1))
             mask |= 1;
 
-        // Check Right (bit 1)
-        if (HasMatchingNeighbor(x + 1, y, map))
+        // Check Left (bit 1)
+        if (HasMatchingNeighbor(x - 1, y))
             mask |= 2;
 
-        // Check Down (bit 2)
-        if (HasMatchingNeighbor(x, y + 1, map))
+        // Check Right (bit 2)
+        if (HasMatchingNeighbor(x + 1, y))
             mask |= 4;
 
-        // Check Left (bit 3)
-        if (HasMatchingNeighbor(x - 1, y, map))
+        // Check Down (bit 3)
+        if (HasMatchingNeighbor(x, y + 1))
             mask |= 8;
 
         return mask;
@@ -87,14 +90,21 @@ internal class BitMaskTile : RogueLikeComponentBase<RogueLikeCell>
     /// <summary>
     /// Checks if a neighboring cell has a BitMaskTile component with the same tile group ID.
     /// </summary>
-    private bool HasMatchingNeighbor(int x, int y, GameMap map)
+    private bool HasMatchingNeighbor(int x, int y)
     {
+        if (Parent == null)
+        {
+            throw new InvalidOperationException("Parent is null");
+        }
+
+        GameMap gameMap = (GameMap)Parent.CurrentMap!;
+
         // Check bounds
-        if (x < 0 || x >= map.Width || y < 0 || y >= map.Height)
+        if (x < 0 || x >= gameMap.Width || y < 0 || y >= gameMap.Height)
             return false;
 
         // Get the terrain cell at the position
-        var terrain = map.GetTerrainAt<RogueLikeCell>(new Point(x, y));
+        var terrain = gameMap.GetTerrainAt<RogueLikeCell>(new Point(x, y));
     
         if (terrain == null)
             return false;

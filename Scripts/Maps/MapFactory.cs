@@ -38,11 +38,19 @@ internal static class MapFactory
         var flowerMap = generator.Context.GetFirst<ISettableGridView<bool>>("Flowers");
 
         // Set the generated map in MapObjectFactory for bitmask calculations
-        MapObjectFactory.SetGeneratedMap(generatedMap);
-
+        // MapObjectFactory.SetGeneratedMap(generatedMap);
+        
         // Create actual integration library map.
-        var map = new GameMap(generator.Context.Width, generator.Context.Height, null);
+        var map = new GameMap(generator.Context.Width, generator.Context.Height, null, generator.Context);
+        
+        // Translate GoRogue's terrain data into actual integration library objects.  Our terrain must be of type
+        // MemoryAwareRogueLikeCells because we are using the integration library's "memory-based" fov visibility
+        // system.
+        map.ApplyTerrainOverlay(generatedMap, (pos, val) => val ? MapObjectFactory.Floor(pos) : MapObjectFactory.Wall(pos));
+        map.ApplyTerrainOverlay(flowerMap, (pos, val) => val ? MapObjectFactory.Flower(pos) : null);
 
+        map.ResolveBitmaskTiles();
+        
         // Add a component that will implement a character "memory" system, where tiles will be dimmed when they aren't seen by the player,
         // and remain visible exactly as they were when the player last saw them regardless of changes to their actual appearance,
         // until the player sees them again.
@@ -51,13 +59,6 @@ internal static class MapFactory
         // other classes in the FieldOfView namespace, or create your own by inheriting from FieldOfViewHandlerBase
         map.AllComponents.Add(new DimmingMemoryFieldOfViewHandler(0.6f));
 
-        // Translate GoRogue's terrain data into actual integration library objects.  Our terrain must be of type
-        // MemoryAwareRogueLikeCells because we are using the integration library's "memory-based" fov visibility
-        // system.
-        map.ApplyTerrainOverlay(generatedMap, (pos, val) => val ? MapObjectFactory.Floor(pos) : MapObjectFactory.Tree(pos));
-
-        map.ApplyTerrainOverlay(flowerMap, (pos, val) => val ? MapObjectFactory.Flower(pos) : null);
-        
         // Generate 5 enemies, placing them in random walkable locations for demo purposes.
         for (int i = 0; i < 5; i++)
         {
