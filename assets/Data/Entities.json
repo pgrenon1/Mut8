@@ -73,7 +73,7 @@
     "tree": {
       "name": "Tree",
       "blocking": true,
-      "transparent": false,
+      "transparent": true,
       "glyph": 526,
       "genome": {
         "stout": 5
