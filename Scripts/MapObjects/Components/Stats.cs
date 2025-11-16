@@ -36,7 +36,7 @@ internal class Stats : RogueLikeComponentBase<RogueLikeEntity>
     {
         float strongGeneValue = _genome?.GetGeneNormalized(Gene.Strong) ?? 0f;
         float attackPowerModifier = 1f + (GameData.StrongGeneAttackMultiplier - 1f) * strongGeneValue;
-        return BaseAttackPower + attackPowerModifier;
+        return BaseAttackPower * attackPowerModifier;
     }
 
     public float GetSpeedMultiplier()

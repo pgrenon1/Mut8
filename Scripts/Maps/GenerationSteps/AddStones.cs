@@ -25,7 +25,7 @@ public class AddStones : GenerationStep
         {
             for (int y = 0; y < wallFloorContext.Height; y++)
             {
-                bool isStone = !wallFloorContext[x,y] && GlobalRandom.DefaultRNG.PercentageCheck(1f);
+                bool isStone = !wallFloorContext[x,y] && GlobalRandom.DefaultRNG.PercentageCheck(5f);
                 if (isStone)
                 {
                     wallFloorContext[x,y] = false;

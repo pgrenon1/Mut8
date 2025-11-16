@@ -35,7 +35,7 @@ internal class MeleeAttackAction : AttackAction
         // Log the attack
         string attackMessage = $"{Entity.Name} attacks {TargetEntity.Name} for {damage:F1} damage! [{GetCost()}]";
         Engine.MainGame?.MessagePanel?.AddMessage(Entity, attackMessage);
-            
+
         defenderHealth.TakeDamage(damage);
 
         return ActionResult.SuccessWithTime(GetCost());
