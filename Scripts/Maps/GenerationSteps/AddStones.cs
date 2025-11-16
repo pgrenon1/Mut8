@@ -27,9 +27,23 @@ public class AddStones : GenerationStep
             {
                 bool isStone = !wallFloorContext[x,y] && GlobalRandom.DefaultRNG.PercentageCheck(5f);
                 if (isStone)
-                {
                     wallFloorContext[x,y] = false;
+
+                bool isSurroundedByFloor = true;
+                Direction[] adjacentPositions = AdjacencyRule.EightWay.DirectionsOfNeighborsCache;
+                foreach (Direction direction in adjacentPositions)
+                {
+                    Point position = new Point(x + direction.DeltaX, y +direction.DeltaY);
+                    
+                    // Skip if the position is out of bounds
+                    if (!wallFloorContext.Contains(position)) 
+                        continue;
+                    
+                    if (!wallFloorContext[position])
+                        isSurroundedByFloor = false;
                 }
+                
+                isStone = isStone || isSurroundedByFloor && GlobalRandom.DefaultRNG.PercentageCheck(5f);
 
                 stoneContext[x,y] = isStone;
             }

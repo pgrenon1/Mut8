@@ -65,7 +65,8 @@ internal class GeneScanner : RogueLikeComponentBase<RogueLikeEntity>
             Point checkPos = Parent.Position + direction;
 
             // Skip if position is out of bounds
-            if (!Parent.CurrentMap.Contains(checkPos)) continue;
+            if (!Parent.CurrentMap.Contains(checkPos)) 
+                continue;
 
             // Check all objects at this position for Genome components
             foreach (IGameObject obj in Parent.CurrentMap.GetObjectsAt(checkPos))

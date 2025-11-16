@@ -209,7 +209,7 @@ internal class StatusPanel : ControlsConsole
             string text = $"{gene}: {rawValue:F1}% {surroundText}";
             
             // insert color changes based on the length of the bar + child bar
-            int barsWidth = (int)(baseBar.Width * baseBar.Progress + childBar.Width * childBar.Progress);
+            int barsWidth = (int)(Math.Floor(baseBar.Width * baseBar.Progress) + Math.Floor(childBar.Width * childBar.Progress));
 
             string recolorWhite = "[c:r f:white][c:r b:transparent]";
             string recolorBlack = "[c:r f:black][c:r b:transparent]";

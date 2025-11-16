@@ -57,7 +57,7 @@
     },
     "stone": {
       "name": "Stone",
-      "blocking": false,
+      "blocking": true,
       "transparent": false,
       "glyph": 1034,
       "genome": {
